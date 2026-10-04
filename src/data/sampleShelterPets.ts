@@ -1,0 +1,300 @@
+import { ShelterPet } from '../types/petVerification';
+
+export const SAMPLE_VERIFICATION_OFFICERS = [
+  { name: 'Officer Elena Rostova', badge: 'PT-FW-042', region: 'Central Austin Metro', phone: '(512) 555-0142' },
+  { name: 'Officer David Chen', badge: 'PT-FW-077', region: 'Travis & Williamson County', phone: '(512) 555-0189' },
+  { name: 'Officer Sarah Miller', badge: 'PT-FW-095', region: 'South Austin & San Marcos', phone: '(512) 555-0211' },
+  { name: 'Officer Marcus Vance', badge: 'PT-FW-112', region: 'East Austin & Bastrop', phone: '(512) 555-0320' },
+];
+
+export const INITIAL_SHELTER_PETS: ShelterPet[] = [
+  {
+    id: 'PET-2026-001',
+    name: 'Bella',
+    petType: 'Dog',
+    breed: 'Golden Retriever',
+    age: '2 years',
+    gender: 'Female',
+    location: 'Austin, TX',
+    description:
+      'Gentle, friendly, and affectionate Golden Retriever. Great with young children, leash trained, and loves outdoor fetch. Surrendered by a moving family.',
+    photoUrl:
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=80',
+    shelterName: 'Austin Pet Rescue Sanctuary',
+    shelterAddress: '4820 Compassion Way, Austin, TX 78745',
+    shelterContact: '(512) 555-0199',
+    submissionDate: '2026-09-27',
+    status: 'Pending Verification',
+    history: [
+      {
+        stage: 'Pet Added',
+        timestamp: '2026-09-27T10:15:00Z',
+        actor: 'Austin Pet Rescue Sanctuary',
+        note: 'Submitted pet profile for in-person physical verification.',
+      },
+      {
+        stage: 'Pending Verification',
+        timestamp: '2026-09-27T10:15:00Z',
+        actor: 'System',
+        note: 'Queued for physical inspection scheduling by Petify verification auditors.',
+      },
+    ],
+  },
+  {
+    id: 'PET-2026-002',
+    name: 'Milo',
+    petType: 'Cat',
+    breed: 'Domestic Short Hair (Tuxedo)',
+    age: '1 year',
+    gender: 'Male',
+    location: 'Austin, TX',
+    description:
+      'Playful tuxedo cat with sleek markings and bright green eyes. Litter-trained, inquisitive, purrs constantly when petted, and loves feather teasers.',
+    photoUrl:
+      'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=900&q=80',
+    shelterName: 'Austin Pet Rescue Sanctuary',
+    shelterAddress: '4820 Compassion Way, Austin, TX 78745',
+    shelterContact: '(512) 555-0199',
+    submissionDate: '2026-09-25',
+    status: 'Verification Scheduled',
+    scheduleDetails: {
+      officer: 'Officer David Chen',
+      officerBadge: 'PT-FW-077',
+      visitDate: '2026-09-29',
+      visitTime: '10:30 AM',
+      visitLocation: '4820 Compassion Way, Austin, TX 78745',
+      notes: 'Inspect feline cattery quarantine wing, verify microchip 9851410029318, and assess temperament.',
+      scheduledAt: '2026-09-26T14:20:00Z',
+    },
+    history: [
+      {
+        stage: 'Pet Added',
+        timestamp: '2026-09-25T09:30:00Z',
+        actor: 'Austin Pet Rescue Sanctuary',
+        note: 'Pet profile created.',
+      },
+      {
+        stage: 'Pending Verification',
+        timestamp: '2026-09-25T09:30:00Z',
+        actor: 'System',
+        note: 'Submitted to verification queue.',
+      },
+      {
+        stage: 'Verification Scheduled',
+        timestamp: '2026-09-26T14:20:00Z',
+        actor: 'Admin Team',
+        note: 'Physical inspection visit scheduled with Officer David Chen for Sept 29, 2026 at 10:30 AM.',
+      },
+    ],
+  },
+  {
+    id: 'PET-2026-003',
+    name: 'Luna',
+    petType: 'Dog',
+    breed: 'Siberian Husky Mix',
+    age: '3 years',
+    gender: 'Female',
+    location: 'Round Rock, TX',
+    description:
+      'Energetic and striking blue-eyed Husky mix. Very loyal, loves brisk walks and agility games. Up to date on all core vaccinations and microchipped.',
+    photoUrl:
+      'https://images.unsplash.com/photo-1605568427561-40dd23c2acea?auto=format&fit=crop&w=900&q=80',
+    shelterName: 'Hope Paws Animal Haven',
+    shelterAddress: '1204 Sanctuary Blvd, Round Rock, TX 78664',
+    shelterContact: '(512) 555-0842',
+    submissionDate: '2026-09-22',
+    status: 'Verified',
+    scheduleDetails: {
+      officer: 'Officer Elena Rostova',
+      officerBadge: 'PT-FW-042',
+      visitDate: '2026-09-24',
+      visitTime: '02:00 PM',
+      visitLocation: '1204 Sanctuary Blvd, Round Rock, TX 78664',
+      notes: 'Verify outdoor run space, kennel cleanliness, and intake surrender paperwork.',
+      scheduledAt: '2026-09-23T11:00:00Z',
+    },
+    inspectionReport: {
+      checklist: {
+        existsAtShelter: true,
+        detailsMatch: true,
+        photoMatches: true,
+        addressVerified: true,
+        availableForAdoption: true,
+        basicConditionVerified: true,
+      },
+      verificationNotes:
+        'Luna was physically inspected in Enclosure B-4. Microchip verified (#9820004128912). Temperament is calm and friendly. Shelter medical logs confirm rabies and DHPP vaccines.',
+      verificationDate: '2026-09-24',
+      verificationOfficer: 'Officer Elena Rostova',
+      officerBadge: 'PT-FW-042',
+      completedAt: '2026-09-24T15:30:00Z',
+    },
+    history: [
+      {
+        stage: 'Pet Added',
+        timestamp: '2026-09-22T08:00:00Z',
+        actor: 'Hope Paws Animal Haven',
+        note: 'Pet profile created.',
+      },
+      {
+        stage: 'Verification Scheduled',
+        timestamp: '2026-09-23T11:00:00Z',
+        actor: 'Admin Team',
+        note: 'Scheduled for inspection with Officer Elena Rostova.',
+      },
+      {
+        stage: 'Physical Verification',
+        timestamp: '2026-09-24T15:30:00Z',
+        actor: 'Officer Elena Rostova (PT-FW-042)',
+        note: 'Physical inspection completed. All 6 verification checklist standards passed.',
+      },
+      {
+        stage: 'Verified',
+        timestamp: '2026-09-24T15:35:00Z',
+        actor: 'System',
+        note: 'Verification passed. Currently awaiting final Admin Approval before public adoption listing.',
+      },
+    ],
+  },
+  {
+    id: 'PET-2026-004',
+    name: 'Rocky',
+    petType: 'Dog',
+    breed: 'German Shepherd',
+    age: '4 years',
+    gender: 'Male',
+    location: 'Austin, TX',
+    description:
+      'Noble, well-trained German Shepherd with excellent basic obedience skills (sit, stay, heel). Calm demeanor, gentle protector, and very attentive companion.',
+    photoUrl:
+      'https://images.unsplash.com/photo-1589941013453-ec89f33b5455?auto=format&fit=crop&w=900&q=80',
+    shelterName: 'Austin Pet Rescue Sanctuary',
+    shelterAddress: '4820 Compassion Way, Austin, TX 78745',
+    shelterContact: '(512) 555-0199',
+    submissionDate: '2026-09-18',
+    status: 'Available for Adoption',
+    scheduleDetails: {
+      officer: 'Officer David Chen',
+      officerBadge: 'PT-FW-077',
+      visitDate: '2026-09-20',
+      visitTime: '11:00 AM',
+      visitLocation: '4820 Compassion Way, Austin, TX 78745',
+      notes: 'Standard physical inspection for canine intake.',
+      scheduledAt: '2026-09-19T09:00:00Z',
+    },
+    inspectionReport: {
+      checklist: {
+        existsAtShelter: true,
+        detailsMatch: true,
+        photoMatches: true,
+        addressVerified: true,
+        availableForAdoption: true,
+        basicConditionVerified: true,
+      },
+      verificationNotes:
+        'Rocky is in prime physical condition, well-groomed, alert, and housed in spacious indoor/outdoor kennel. All records confirmed with attending shelter veterinarian.',
+      verificationDate: '2026-09-20',
+      verificationOfficer: 'Officer David Chen',
+      officerBadge: 'PT-FW-077',
+      completedAt: '2026-09-20T12:00:00Z',
+    },
+    adminApproval: {
+      approvedBy: 'Sanctuary Super Admin',
+      approvalDate: '2026-09-21',
+      adminNotes:
+        'Accreditation criteria satisfied. Inspection report validated. Approved for public adopter listing on Petify.',
+    },
+    history: [
+      {
+        stage: 'Pet Added',
+        timestamp: '2026-09-18T10:00:00Z',
+        actor: 'Austin Pet Rescue Sanctuary',
+        note: 'Pet profile created.',
+      },
+      {
+        stage: 'Verification Scheduled',
+        timestamp: '2026-09-19T09:00:00Z',
+        actor: 'Admin Team',
+        note: 'Scheduled for inspection with Officer David Chen.',
+      },
+      {
+        stage: 'Physical Verification',
+        timestamp: '2026-09-20T12:00:00Z',
+        actor: 'Officer David Chen (PT-FW-077)',
+        note: 'All physical verification criteria fulfilled.',
+      },
+      {
+        stage: 'Admin Approval',
+        timestamp: '2026-09-21T09:15:00Z',
+        actor: 'Sanctuary Super Admin',
+        note: 'Listing reviewed and approved for public search.',
+      },
+      {
+        stage: 'Available for Adoption',
+        timestamp: '2026-09-21T09:15:00Z',
+        actor: 'System',
+        note: 'Pet is live on the public adoption directory.',
+      },
+    ],
+  },
+  {
+    id: 'PET-2026-005',
+    name: 'Jasper',
+    petType: 'Dog',
+    breed: 'French Bulldog',
+    age: '1.5 years',
+    gender: 'Male',
+    location: 'Austin, TX',
+    description:
+      'Compact, playful French Bulldog looking for a loving companion home. Very affectionate and good on short strolls.',
+    photoUrl:
+      'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=900&q=80',
+    shelterName: 'North Trail Rescue Center',
+    shelterAddress: '9100 Research Blvd, Austin, TX 78758',
+    shelterContact: '(512) 555-0450',
+    submissionDate: '2026-09-23',
+    status: 'Rejected',
+    scheduleDetails: {
+      officer: 'Officer Sarah Miller',
+      officerBadge: 'PT-FW-095',
+      visitDate: '2026-09-24',
+      visitTime: '01:30 PM',
+      visitLocation: '9100 Research Blvd, Austin, TX 78758',
+      notes: 'Investigate physical facility and verify medical intake papers.',
+      scheduledAt: '2026-09-23T16:00:00Z',
+    },
+    rejectionDetails: {
+      reason:
+        'Physical Verification Failed: The animal was not physically present at the shelter premises during the on-site inspection visit. The shelter representative admitted the pet was being held off-site by an unregistered commercial third party without documented veterinary inspection or legal intake custody transfer.',
+      rejectedBy: 'Officer Sarah Miller (PT-FW-095)',
+      rejectedAt: '2026-09-24T14:45:00Z',
+      stage: 'Physical Verification',
+    },
+    history: [
+      {
+        stage: 'Pet Added',
+        timestamp: '2026-09-23T11:00:00Z',
+        actor: 'North Trail Rescue Center',
+        note: 'Pet profile created.',
+      },
+      {
+        stage: 'Verification Scheduled',
+        timestamp: '2026-09-23T16:00:00Z',
+        actor: 'Admin Team',
+        note: 'Scheduled for inspection with Officer Sarah Miller.',
+      },
+      {
+        stage: 'Physical Verification',
+        timestamp: '2026-09-24T14:45:00Z',
+        actor: 'Officer Sarah Miller (PT-FW-095)',
+        note: 'Inspection failed: Pet was not physically present at facility.',
+      },
+      {
+        stage: 'Rejected',
+        timestamp: '2026-09-24T14:45:00Z',
+        actor: 'Officer Sarah Miller',
+        note: 'Listing rejected. Rejection reason filed to shelter dashboard.',
+      },
+    ],
+  },
+];

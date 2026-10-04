@@ -1,0 +1,6 @@
+{
+  "name": "Kin & Paws",
+  "description": "Ethical pet adoption & shelter welfare network connecting thoughtful humans with companions through dignified care and transparent tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

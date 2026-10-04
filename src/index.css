@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  
+  --color-primary: #9c3e1f;
+  --color-primary-hover: #823217;
+  --color-primary-container: #bc5634;
+  --color-primary-fixed: #ffdbd0;
+  --color-primary-fixed-dim: #ffb59e;
+  
+  --color-secondary: #376851;
+  --color-secondary-container: #b7ebce;
+  --color-secondary-fixed: #b9eed1;
+  --color-secondary-fixed-dim: #9ed2b6;
+  --color-on-secondary-fixed-variant: #1e4f3a;
+  
+  --color-tertiary: #206280;
+  --color-tertiary-container: #3e7b9a;
+  --color-tertiary-fixed: #c2e8ff;
+  
+  --color-surface: #fff8f1;
+  --color-surface-dim: #dfd9d2;
+  --color-surface-bright: #fff8f1;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f9f3eb;
+  --color-surface-container: #f3ede5;
+  --color-surface-container-high: #eee7e0;
+  --color-surface-container-highest: #e8e2da;
+  
+  --color-on-surface: #1d1b17;
+  --color-on-surface-variant: #56423c;
+  --color-outline: #8a726b;
+  --color-outline-variant: #ddc0b8;
+  --color-background: #fff8f1;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #fff8f1;
+  color: #1d1b17;
+}
+
+/* Material Symbols font helper */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+.material-symbols-outlined.fill-1 {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
