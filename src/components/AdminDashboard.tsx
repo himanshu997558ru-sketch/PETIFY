@@ -42,8 +42,10 @@ import {
   CheckCircle,
   Building2,
   ClipboardCheck,
+  User,
+  Shield,
 } from 'lucide-react';
-import { Pet, AdoptionApplication, UserProfile, ShelterVerificationRequest, VerifiedShelterBadge, VerificationStage } from '../types';
+import { Pet, AdoptionApplication, UserProfile, ShelterVerificationRequest, VerifiedShelterBadge, VerificationStage, ScreenType } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
 import { useShelterVerification } from '../context/ShelterVerificationContext';
 import { VerificationPipelineTracker } from './verification/VerificationPipelineTracker';
@@ -58,7 +60,7 @@ import { useAppStore } from '../context/AppContext';
 interface AdminDashboardProps {
   user?: UserProfile;
   onSignOut: () => void;
-  onNavigateScreen?: (screen: 'adopter' | 'shelter' | 'admin') => void;
+  onNavigateScreen?: (screen: ScreenType) => void;
   pets?: Pet[];
   applications?: AdoptionApplication[];
 }
@@ -444,11 +446,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#0f172a] tracking-tight leading-none">Petify</h1>
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mt-1">
+                  Alliance Super Admin
+                </span>
               </div>
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              aria-label="Close menu"
             >
               <X className="w-5 h-5" />
             </button>
@@ -546,17 +552,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ================= MAIN CONTENT WRAPPER ================= */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* TOP HEADER BAR */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 shrink-0">
-          <div className="flex items-center gap-3 flex-1 max-w-xl">
+        <header className="h-16 bg-white border-b border-slate-200/80 px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1 max-w-xl">
+            {/* Prominent Three-Line Menu Button on Mobile/Tablet */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100"
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors shrink-0 flex items-center justify-center shadow-2xs"
+              aria-label="Open 3-line navigation menu"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-6 h-6" />
             </button>
 
-            {/* Search Bar matching screenshot */}
-            <div className="relative w-full max-w-md">
+            {/* Mobile Header Title */}
+            <div className="lg:hidden flex items-center gap-2 truncate">
+              <span className="text-base font-bold text-slate-900 truncate">Petify Admin</span>
+            </div>
+
+            {/* Search Bar - hidden on narrow mobile, visible on sm+ */}
+            <div className="relative w-full max-w-md hidden sm:block">
               <input
                 type="text"
                 placeholder="Search users, pets, applications..."
@@ -657,68 +671,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           {/* ================= 4 STAT SUMMARY CARDS ================= */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* 1. Total Users */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <div className="flex items-center justify-between">
-                <div className="w-11 h-11 rounded-xl bg-[#dbeafe] text-[#2563eb] flex items-center justify-center">
-                  <Users className="w-6 h-6" />
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#dbeafe] text-[#2563eb] flex items-center justify-center">
+                  <Users className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
-                <Users className="w-4 h-4 text-blue-300" />
+                <Users className="w-3.5 h-3.5 text-blue-300 hidden xs:block" />
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-4">Total Users</p>
-              <h3 className="text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">250</h3>
-              <div className="flex items-center gap-1 text-[11px] text-[#16a34a] font-semibold mt-2">
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 mt-2 sm:mt-4">Total Users</p>
+              <h3 className="text-xl sm:text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">250</h3>
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#16a34a] font-semibold mt-1 sm:mt-2">
                 <span>↑ 12%</span>
-                <span className="text-slate-400 font-normal">from last month</span>
+                <span className="text-slate-400 font-normal hidden sm:inline">from last month</span>
               </div>
             </div>
 
             {/* 2. Total Pets */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <div className="flex items-center justify-between">
-                <div className="w-11 h-11 rounded-xl bg-[#dcfce7] text-[#16a34a] flex items-center justify-center">
-                  <PawPrint className="w-6 h-6" />
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#dcfce7] text-[#16a34a] flex items-center justify-center">
+                  <PawPrint className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
-                <PawPrint className="w-4 h-4 text-emerald-300" />
+                <PawPrint className="w-3.5 h-3.5 text-emerald-300 hidden xs:block" />
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-4">Total Pets</p>
-              <h3 className="text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">120</h3>
-              <div className="flex items-center gap-1 text-[11px] text-[#16a34a] font-semibold mt-2">
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 mt-2 sm:mt-4">Total Pets</p>
+              <h3 className="text-xl sm:text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">120</h3>
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#16a34a] font-semibold mt-1 sm:mt-2">
                 <span>↑ 8%</span>
-                <span className="text-slate-400 font-normal">from last month</span>
+                <span className="text-slate-400 font-normal hidden sm:inline">from last month</span>
               </div>
             </div>
 
             {/* 3. Adoptions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <div className="flex items-center justify-between">
-                <div className="w-11 h-11 rounded-xl bg-[#ffe4e6] text-[#e11d48] flex items-center justify-center">
-                  <Heart className="w-6 h-6 fill-current" />
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#ffe4e6] text-[#e11d48] flex items-center justify-center">
+                  <Heart className="w-4 h-4 sm:w-6 sm:h-6 fill-current" />
                 </div>
-                <Heart className="w-4 h-4 text-rose-300 fill-current" />
+                <Heart className="w-3.5 h-3.5 text-rose-300 fill-current hidden xs:block" />
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-4">Adoptions</p>
-              <h3 className="text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">78</h3>
-              <div className="flex items-center gap-1 text-[11px] text-[#16a34a] font-semibold mt-2">
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 mt-2 sm:mt-4">Adoptions</p>
+              <h3 className="text-xl sm:text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">78</h3>
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#16a34a] font-semibold mt-1 sm:mt-2">
                 <span>↑ 15%</span>
-                <span className="text-slate-400 font-normal">from last month</span>
+                <span className="text-slate-400 font-normal hidden sm:inline">from last month</span>
               </div>
             </div>
 
             {/* 4. Pending Applications */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
               <div className="flex items-center justify-between">
-                <div className="w-11 h-11 rounded-xl bg-[#fef3c7] text-[#d97706] flex items-center justify-center">
-                  <Clock className="w-6 h-6" />
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#fef3c7] text-[#d97706] flex items-center justify-center">
+                  <Clock className="w-4 h-4 sm:w-6 sm:h-6" />
                 </div>
-                <Clock className="w-4 h-4 text-amber-300" />
+                <Clock className="w-3.5 h-3.5 text-amber-300 hidden xs:block" />
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-4">Pending Applications</p>
-              <h3 className="text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">15</h3>
-              <div className="flex items-center gap-1 text-[11px] text-[#dc2626] font-semibold mt-2">
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 mt-2 sm:mt-4">Pending Apps</p>
+              <h3 className="text-xl sm:text-3xl font-bold text-[#0f172a] tracking-tight mt-0.5">15</h3>
+              <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#dc2626] font-semibold mt-1 sm:mt-2">
                 <span>↓ 5%</span>
-                <span className="text-slate-400 font-normal">from last month</span>
+                <span className="text-slate-400 font-normal hidden sm:inline">from last month</span>
               </div>
             </div>
           </div>

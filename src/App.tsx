@@ -213,7 +213,7 @@ function MainApp() {
   // ================= 2. MAIN DASHBOARDS (AFTER LOGIN) =================
   if (currentScreen === 'admin') {
     return (
-      <div className="h-screen w-screen overflow-hidden bg-[#f4f7fe]">
+      <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-[#f4f7fe]">
         <AdminDashboard
           user={user}
           onSignOut={handleSignOut}
@@ -243,7 +243,7 @@ function MainApp() {
 
   if (currentScreen === 'shelter') {
     return (
-      <div className="h-screen w-screen overflow-hidden bg-[#f8fafc]">
+      <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-[#f8fafc]">
         <ShelterDashboard
           applications={applications}
           pets={pets}
@@ -303,7 +303,7 @@ function MainApp() {
   // Inspector / Field Worker Portal View
   if (currentScreen === 'inspector') {
     return (
-      <div className="h-screen w-screen overflow-hidden bg-slate-100 flex flex-col">
+      <div className="h-[100dvh] w-full overflow-hidden bg-slate-100 flex flex-col">
         <FieldWorkerPortal
           onNavigateScreen={(screen: ScreenType) => setCurrentScreen(screen)}
         />
@@ -319,7 +319,7 @@ function MainApp() {
 
   // Adopter Dashboard
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#f0fdfa]">
+    <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-[#f0fdfa]">
       <AdopterDashboard
         user={user}
         applications={applications}

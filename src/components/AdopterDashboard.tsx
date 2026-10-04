@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Menu,
   ExternalLink,
   Sparkles,
   MapPin,
@@ -26,6 +27,9 @@ import {
   Award,
   ShieldCheck,
   FileCheck,
+  Building2,
+  Shield,
+  UserCheck,
 } from 'lucide-react';
 import { AdoptionApplication, Pet, SavedCompanion, ScreenType, ShelterMessage, UserProfile } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
@@ -67,6 +71,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
   onSignOut,
 }) => {
   const [activeNav, setActiveNav] = useState<string>('dashboard');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -176,19 +181,41 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
   });
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f0fdfa] text-slate-900 font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f0fdfa] text-slate-900 font-sans relative">
+      {/* Mobile Menu Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden"
+        />
+      )}
+
       {/* ================= LEFT SIDEBAR (LIGHT AQUAMARINE) ================= */}
-      <aside className="w-64 bg-[#e2f8f4] flex flex-col shrink-0 text-[#0f4e4c] select-none border-r border-[#99f6e4]/80">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#e2f8f4] flex flex-col shrink-0 text-[#0f4e4c] select-none border-r border-[#99f6e4]/80 transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:w-64 md:z-auto ${
+          mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        }`}
+      >
         {/* Brand Header */}
-        <div className="p-6 pb-5 flex items-center gap-3 border-b border-[#99f6e4]/70">
-          <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-[#99f6e4]">
-            <img src="/petify-logo.svg" alt="Petify Logo" className="w-full h-full object-contain" />
+        <div className="p-5 sm:p-6 pb-5 flex items-center justify-between border-b border-[#99f6e4]/70">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-[#99f6e4]">
+              <img src="/petify-logo.svg" alt="Petify Logo" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-[#042f2e] flex items-center gap-1.5">
+                Petify
+              </h1>
+              <span className="text-[10px] font-bold text-[#0d9488] uppercase tracking-wider block">Adopter Portal</span>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-[#042f2e] flex items-center gap-1.5">
-              Petify
-            </h1>
-          </div>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="md:hidden p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-[#ccfbf1]"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Items */}
@@ -209,7 +236,10 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveNav(item.id)}
+                onClick={() => {
+                  setActiveNav(item.id);
+                  setMobileMenuOpen(false);
+                }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
                     ? 'bg-[#0d9488] text-white shadow-sm'
@@ -237,7 +267,10 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-[#99f6e4]/70">
           <button
-            onClick={onSignOut}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              onSignOut();
+            }}
             className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#115e59] hover:bg-rose-50 hover:text-rose-700 transition-all"
           >
             <LogOut className="w-4 h-4 text-rose-500" />
@@ -247,14 +280,26 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
       </aside>
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f0fdfa]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f0fdfa] min-w-0">
         {/* Top Header Bar */}
-        <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-[#ccfbf1] px-6 flex items-center justify-between shrink-0 z-10 shadow-2xs">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 leading-tight">Adopter Dashboard</h2>
-              <p className="text-xs text-slate-500">
-                Find your perfect companion and give them a better tomorrow.
+        <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-[#ccfbf1] px-4 sm:px-6 flex items-center justify-between shrink-0 z-10 shadow-2xs gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile 3-Line Hamburger Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 rounded-xl text-[#0f4e4c] hover:text-[#042f2e] bg-[#e0f9f5] hover:bg-[#ccfbf1] border border-[#99f6e4] transition-colors shrink-0 flex items-center justify-center shadow-2xs"
+              aria-label="Open 3-line navigation menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
+            <div className="truncate">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight truncate">
+                Adopter Dashboard
+              </h2>
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate hidden xs:block">
+                Find your companion and track adoption progress.
               </p>
             </div>
           </div>

@@ -132,13 +132,13 @@ export const ShelterVerificationPipelineHub: React.FC<ShelterVerificationPipelin
         </div>
 
         {/* Verification Request Dropdown Picker */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
           <label className="text-xs font-bold text-slate-600 shrink-0">Select Verification Record:</label>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={currentId}
               onChange={(e) => setActiveRequestId(e.target.value)}
-              className="appearance-none pl-3 pr-8 py-2 bg-slate-50 hover:bg-slate-100 focus:bg-white text-xs font-bold text-slate-900 rounded-xl border border-slate-200 focus:outline-[#0d9488] cursor-pointer shadow-2xs"
+              className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 bg-slate-50 hover:bg-slate-100 focus:bg-white text-xs font-bold text-slate-900 rounded-xl border border-slate-200 focus:outline-[#0d9488] cursor-pointer shadow-2xs"
             >
               {requests.map((r) => (
                 <option key={r.requestId} value={r.requestId}>
@@ -151,7 +151,7 @@ export const ShelterVerificationPipelineHub: React.FC<ShelterVerificationPipelin
       </div>
 
       {/* Shelter Summary Meta Banner */}
-      <div className="bg-gradient-to-r from-[#e0f9f5] via-white to-slate-50 p-4 rounded-2xl border border-[#99f6e4] flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-gradient-to-r from-[#e0f9f5] via-white to-slate-50 p-3 sm:p-4 rounded-2xl border border-[#99f6e4] flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-3 sm:gap-6">
           <div className="flex items-center gap-1.5 font-bold text-slate-900">
             <Building2 className="w-4 h-4 text-[#0d9488]" />
@@ -182,6 +182,22 @@ export const ShelterVerificationPipelineHub: React.FC<ShelterVerificationPipelin
             {currentReq?.stage || 'PENDING'}
           </span>
         </div>
+      </div>
+
+      {/* Mobile Fast Step Selector */}
+      <div className="md:hidden flex items-center justify-between gap-2 bg-white p-2.5 rounded-2xl border border-[#99f6e4] shadow-xs">
+        <span className="text-xs font-bold text-[#0d9488] shrink-0">Pipeline Step:</span>
+        <select
+          value={activeStep}
+          onChange={(e) => setActiveStep(e.target.value as any)}
+          className="flex-1 bg-[#f0fdfa] text-xs font-bold text-slate-800 border border-[#99f6e4] rounded-xl py-2 px-3 outline-none"
+        >
+          {PIPELINE_STEPS.map((step) => (
+            <option key={step.id} value={step.id}>
+              {step.stepNumber}. {step.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Interactive 12-Step Horizontal Navigation Bar */}
