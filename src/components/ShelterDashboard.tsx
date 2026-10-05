@@ -36,11 +36,6 @@ import {
 } from 'lucide-react';
 import { AdoptionApplication, Pet, ScreenType, UserProfile, VerifiedShelterBadge } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
-import { useShelterVerification } from '../context/ShelterVerificationContext';
-import { VerificationPipelineTracker } from './verification/VerificationPipelineTracker';
-import { VerifiedShelterBadgeModal } from './verification/VerifiedShelterBadgeModal';
-import { ShelterRegistrationModal } from './verification/ShelterRegistrationModal';
-import { ShelterVerificationPipelineHub } from './verification/ShelterVerificationPipelineHub';
 import { AdopterCommunicationHub } from './AdopterCommunicationHub';
 import { CatBreedsDirectory } from './CatBreedsDirectory';
 import { CAT_BREEDS_DIRECTORY } from '../data/catBreedsData';
@@ -49,6 +44,7 @@ import { DOG_BREEDS_DIRECTORY } from '../data/dogBreedsData';
 import { useAppStore } from '../context/AppContext';
 
 interface ShelterDashboardProps {
+  user?: UserProfile;
   applications: AdoptionApplication[];
   pets: Pet[];
   onOpenChat: (adopterName: string, text: string) => void;
@@ -59,6 +55,7 @@ interface ShelterDashboardProps {
 }
 
 export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
+  user,
   applications,
   pets,
   onOpenChat,
@@ -73,13 +70,6 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [selectedCert, setSelectedCert] = useState<CertificateData | null>(null);
 
-  // Shelter Verification Integration
-  const { requests } = useShelterVerification();
-  // Find current shelter's request (e.g. Happy Paws or first one)
-  const currentShelterRequest = requests.find((r) => r.shelter.shelterName.includes('Happy Paws') || r.stage === 'VERIFIED') || requests[0];
-  const [showBadgeModal, setShowBadgeModal] = useState<VerifiedShelterBadge | null>(null);
-  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
-  const [shelterVerificationViewMode, setShelterVerificationViewMode] = useState<'hub' | 'tracker'>('hub');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Add Pet Modal State
@@ -409,10 +399,9 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
           {[
             { id: 'dashboard', label: 'Dashboard', icon: PawPrint },
             { id: 'add-pet', label: 'Add Pet', icon: Plus },
-            { id: 'my-pets', label: 'My Pets & Verification', icon: PawPrint },
+            { id: 'my-pets', label: 'My Pets', icon: PawPrint },
             { id: 'applications', label: 'Manage Applications', icon: FileText, badge: '4' },
             { id: 'appointments', label: 'Appointment Requests', icon: Calendar, badge: String(appointments.filter(a => a.status !== 'Confirmed').length) },
-            { id: 'verification', label: 'Shelter Verification', icon: ShieldCheck },
             { id: 'messages', label: 'Adopter Communication', icon: MessageSquare, badge: '3' },
             { id: 'analytics', label: 'Analytics', icon: BarChart2 },
             { id: 'history', label: 'Adoption History & Certs', icon: Clock },
@@ -569,13 +558,13 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=120&q=80"
-                  alt="Happy Paws Shelter"
+                  src={user?.avatarUrl || "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=120&q=80"}
+                  alt={user?.name || "Happy Paws Shelter"}
                   className="w-8 h-8 rounded-full object-cover border border-emerald-500/40"
                 />
                 <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">Happy Paws Shelter</p>
-                  <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">Shelter</p>
+                  <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Happy Paws Shelter'}</p>
+                  <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">{user?.role || 'Shelter'}</p>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
@@ -583,10 +572,10 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
                   <div className="px-4 py-2 border-b border-slate-100">
-                    <p className="font-bold text-slate-900">Happy Paws Shelter</p>
-                    <p className="text-slate-500 text-[11px]">coordinator@happypaws.org</p>
+                    <p className="font-bold text-slate-900">{user?.name || 'Happy Paws Shelter'}</p>
+                    <p className="text-slate-500 text-[11px]">{user?.email || 'coordinator@happypaws.org'}</p>
                     <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Verified Shelter
+                      {user?.status || 'Verified Shelter'}
                     </span>
                   </div>
 
@@ -1392,215 +1381,6 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
             </div>
           )}
 
-          {/* ================= SUBVIEW: SHELTER VERIFICATION PIPELINE (Feature 2: Shelter ✅) ================= */}
-          {activeNav === 'verification' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <button
-                    onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
-                  >
-                    ← Back to Dashboard
-                  </button>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    Shelter Verification &amp; Legal Accreditation Hub
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Multi-stage pipeline: Registration → Verification Request → Worker Physical Audit → Verified Shelter Badge.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1 bg-[#e0f9f5] p-1 rounded-xl border border-[#99f6e4]/80">
-                    <button
-                      type="button"
-                      onClick={() => setShelterVerificationViewMode('hub')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        shelterVerificationViewMode === 'hub'
-                          ? 'bg-[#0d9488] text-white shadow-xs'
-                          : 'text-[#115e59] hover:text-[#042f2e]'
-                      }`}
-                    >
-                      <Shield className="w-3.5 h-3.5" />
-                      <span>12-Step Pipeline Hub (VR-2025-105)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShelterVerificationViewMode('tracker')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        shelterVerificationViewMode === 'tracker'
-                          ? 'bg-[#0d9488] text-white shadow-xs'
-                          : 'text-[#115e59] hover:text-[#042f2e]'
-                      }`}
-                    >
-                      <Award className="w-3.5 h-3.5" />
-                      <span>Status &amp; Certificate</span>
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowRegistrationModal(true)}
-                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Register New Facility</span>
-                  </button>
-                </div>
-              </div>
-
-              {shelterVerificationViewMode === 'hub' ? (
-                <ShelterVerificationPipelineHub
-                  initialRequestId="VR-2025-105"
-                  userRole="shelter"
-                />
-              ) : (
-                <>
-              {/* Verified Shelter Badge Banner if Accredited */}
-              {currentShelterRequest?.stage === 'VERIFIED' && currentShelterRequest.badge && (
-                <div className="bg-gradient-to-r from-[#1c382b] via-[#24533e] to-[#1a3d2c] rounded-3xl p-6 sm:p-7 text-white relative overflow-hidden shadow-lg border border-emerald-600/40">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-amber-400/20 border-2 border-amber-300/60 p-3 flex items-center justify-center shrink-0">
-                        <Award className="w-9 h-9 text-amber-300" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-400/30 text-amber-200 border border-amber-300/40">
-                            ALLIANCE GOLD SEAL
-                          </span>
-                          <span className="text-xs font-mono text-emerald-200">
-                            Accreditation ID: {currentShelterRequest.badge.accreditationCode}
-                          </span>
-                        </div>
-                        <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                          Verified Shelter Badge Active
-                        </h3>
-                        <p className="text-xs text-emerald-100 max-w-xl">
-                          Your sanctuary has successfully completed physical on-site verification with an audit rating of{' '}
-                          <strong className="text-amber-300 font-bold">{currentShelterRequest.badge.facilityRating}</strong>.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setShowBadgeModal(currentShelterRequest.badge!)}
-                        className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-amber-950 font-black rounded-xl text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer"
-                      >
-                        <Award className="w-4 h-4 text-amber-950" />
-                        <span>View Badge &amp; Official Certificate</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Full Multi-Stage Verification Pipeline Flowchart */}
-              {currentShelterRequest && (
-                <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900">
-                        Verification Request Status: {currentShelterRequest.shelter.shelterName}
-                      </h4>
-                      <p className="text-xs text-slate-500">
-                        Track progress across each step of the ethical sanctuary accreditation lifecycle
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-700 rounded-lg">
-                      Stage: {currentShelterRequest.stage.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-
-                  <VerificationPipelineTracker request={currentShelterRequest} />
-                </div>
-              )}
-
-              {/* Specific Stage Insights Card */}
-              {currentShelterRequest?.assignedWorker && (
-                <div className="bg-blue-50/70 border border-blue-200 rounded-3xl p-6 space-y-3">
-                  <div className="flex items-center gap-2 text-blue-950 font-bold text-sm">
-                    <UserCheck className="w-5 h-5 text-blue-600" />
-                    <span>Assigned Field Auditor Details</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-700">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-blue-800 block">Inspector</span>
-                      <p className="font-bold text-slate-900">{currentShelterRequest.assignedWorker.name}</p>
-                      <p className="text-[11px] font-mono text-blue-700">{currentShelterRequest.assignedWorker.badgeNumber}</p>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-blue-800 block">Scheduled Visit</span>
-                      <p className="font-bold text-slate-900">{currentShelterRequest.scheduledVisitDate || 'Scheduled This Week'}</p>
-                      <p className="text-[11px] text-slate-600">Window: {currentShelterRequest.scheduledVisitTime || '10:00 AM'}</p>
-                    </div>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-blue-800 block">Officer Contact</span>
-                      <p className="font-bold text-slate-900">{currentShelterRequest.assignedWorker.phone}</p>
-                      <p className="text-[11px] text-slate-600">{currentShelterRequest.assignedWorker.email}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Traditional Accreditation Metrics Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 shadow-2xs space-y-1">
-                  <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Accreditation Status</span>
-                  <h3 className="text-lg font-bold text-emerald-950 flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                    <span>{currentShelterRequest?.stage === 'VERIFIED' ? 'Verified Shelter' : 'Verification In Progress'}</span>
-                  </h3>
-                  <p className="text-xs text-emerald-800">Petify Humane Alliance Certified Standard.</p>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">NGO Registration</span>
-                  <h3 className="text-lg font-bold text-slate-900 font-mono">
-                    {currentShelterRequest?.shelter.legalRegNumber || 'TX-501-449'}
-                  </h3>
-                  <p className="text-xs text-slate-500">Valid non-profit charity registry clearance.</p>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Facility Health Rating</span>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {currentShelterRequest?.report?.overallScore ? `${currentShelterRequest.report.overallScore}/100 Audit Score` : '98.5% Compliant'}
-                  </h3>
-                  <p className="text-xs text-slate-500">Physical inspection verified by field officer.</p>
-                </div>
-              </div>
-
-              {/* Accreditation Documents */}
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-                <h4 className="text-sm font-bold text-slate-900">Accreditation Documents On File</h4>
-                <div className="space-y-2">
-                  {[
-                    { name: 'State Veterinary Board Operating License 2025-2026.pdf', date: 'Verified Jan 15, 2025' },
-                    { name: 'Humane Society Facility Sanitation Certificate.pdf', date: 'Verified Mar 22, 2025' },
-                    { name: 'Non-Profit 501(c)(3) Legal Status Documentation.pdf', date: 'Verified Annual' },
-                  ].map((doc, idx) => (
-                    <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <FileCheck className="w-4 h-4 text-emerald-600" />
-                        <span className="text-xs font-semibold text-slate-800">{doc.name}</span>
-                      </div>
-                      <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        {doc.date}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              </>
-              )}
-            </div>
-          )}
 
           {/* ================= SUBVIEW: DOG BREEDS DIRECTORY & SHELTER INTAKE ================= */}
           {activeNav === 'dog-breeds' && (
@@ -1746,24 +1526,32 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 >
                   ← Back to Dashboard
                 </button>
-                <h2 className="text-xl font-bold text-slate-900">Happy Paws Shelter Settings</h2>
-                <p className="text-xs text-slate-500">Accredited Rescue #TX-501-449 • Contact & Intake Preferences</p>
+                <h2 className="text-xl font-bold text-slate-900">{user?.name || 'Happy Paws Shelter'} Settings</h2>
+                <p className="text-xs text-slate-500">{user?.idVerification || 'Accredited Sanctuary Partner'} • Contact &amp; Intake Preferences</p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-4 max-w-xl">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Organization Name</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Organization / Shelter Name</label>
                   <input
                     type="text"
-                    defaultValue="Happy Paws Shelter"
+                    defaultValue={user?.name || "Happy Paws Shelter"}
                     className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Shelter Address</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Contact Email Address</label>
+                  <input
+                    type="email"
+                    defaultValue={user?.email || "coordinator@happypaws.org"}
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Shelter Facility Address</label>
                   <input
                     type="text"
-                    defaultValue="428 Orchard Ridge Trail, Austin, TX"
+                    defaultValue={user?.location || "428 Orchard Ridge Trail, Austin, TX"}
                     className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
                   />
                 </div>
@@ -2067,25 +1855,6 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
           data={selectedCert}
           onClose={() => setSelectedCert(null)}
           viewerRole="shelter"
-        />
-      )}
-
-      {/* ================= MODAL: VERIFIED SHELTER BADGE ================= */}
-      {showBadgeModal && (
-        <VerifiedShelterBadgeModal
-          badge={showBadgeModal}
-          onClose={() => setShowBadgeModal(null)}
-        />
-      )}
-
-      {/* ================= MODAL: SHELTER REGISTRATION (Step 1) ================= */}
-      {showRegistrationModal && (
-        <ShelterRegistrationModal
-          onClose={() => setShowRegistrationModal(false)}
-          onSuccess={() => {
-            triggerToast('Facility registration and verification request submitted to Admin queue!');
-            setShowRegistrationModal(false);
-          }}
         />
       )}
 

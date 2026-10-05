@@ -14,6 +14,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onSave,
 }) => {
   const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email || '');
   const [location, setLocation] = useState(user.location);
   const [livingSpace, setLivingSpace] = useState(user.livingSpace);
   const [activityLevel, setActivityLevel] = useState(user.activityLevel);
@@ -24,6 +25,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     onSave({
       ...user,
       name,
+      email,
       location,
       livingSpace,
       activityLevel,
@@ -57,6 +59,16 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="w-full bg-[#f9f3eb] text-[#1d1b17] rounded-lg px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-[#9c3e1f]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#1d1b17] mb-1">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-[#f9f3eb] text-[#1d1b17] rounded-lg px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-[#9c3e1f]"
             />
           </div>

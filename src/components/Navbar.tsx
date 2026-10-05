@@ -116,7 +116,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-lg border border-[#e8e2da] py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-4 py-2 border-b border-[#f3ede5]">
                 <p className="text-sm font-semibold text-[#1d1b17]">{user.name}</p>
-                <p className="text-xs text-[#56423c]">{user.location} • {user.status}</p>
+                {user.email && (
+                  <p className="text-xs text-[#8a726b] font-mono truncate">{user.email}</p>
+                )}
+                <p className="text-[11px] text-[#56423c] mt-0.5">{user.location} • {user.status}</p>
               </div>
               <div className="py-1">
                 {user.role === 'admin' && (

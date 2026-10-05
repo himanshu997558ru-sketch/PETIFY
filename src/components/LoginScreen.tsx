@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { KIN_PAWS_LOGO } from '../data/mockData';
 import { ScreenType } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginScreenProps {
   onNavigate: (screen: ScreenType) => void;
@@ -12,14 +13,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onNavigate,
   onLoginSuccess,
 }) => {
-  const [email, setEmail] = useState('sarah.jenkins@example.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const { signInWithEmail, resetPassword } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [forgotSent, setForgotSent] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     const cleanEmail = email.trim().toLowerCase();
@@ -35,16 +39,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       }
     }
 
-    if (cleanEmail.includes('shelter') || cleanEmail.includes('rescue')) {
-      onLoginSuccess('shelter');
-      return;
+    setIsSubmitting(true);
+    try {
+      const res = await signInWithEmail(cleanEmail, cleanPass);
+      if (res.success) {
+        onLoginSuccess(res.role || 'adopter');
+      } else {
+        setErrorMsg(res.error || 'Invalid email or password.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Authentication error.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onLoginSuccess('adopter');
   };
 
-  const handleForgotPassword = (e: React.MouseEvent) => {
+  const handleForgotPassword = async (e: React.MouseEvent) => {
     e.preventDefault();
+    if (email) resetPassword(email);
     setForgotSent(true);
     setTimeout(() => setForgotSent(false), 4000);
   };
@@ -89,6 +101,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           )}
 
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="w-full mb-4 p-2.5 rounded-lg bg-[#ffdad6] text-[#ba1a1a] text-xs font-medium">
+              {errorMsg}
+            </div>
+          )}
+
           {/* Login Form */}
           <form className="w-full flex flex-col space-y-4" onSubmit={handleSubmit}>
             {/* Email Field */}
@@ -115,12 +134,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
               </div>
             </div>
-
-            {errorMsg && (
-              <div className="p-2.5 rounded-lg bg-[#ffdad6] text-[#ba1a1a] text-xs font-medium">
-                {errorMsg}
-              </div>
-            )}
 
             {/* Password Field */}
             <div>
@@ -182,7 +195,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             <button
               id="login-submit-btn"
               type="submit"
-              className="w-full bg-[#9c3e1f] hover:bg-[#823217] active:scale-[0.99] text-white text-sm font-semibold py-3.5 px-6 rounded-lg transition-all duration-150 shadow-md shadow-[#9c3e1f]/20 flex items-center justify-center gap-2 mt-2"
+              disabled={isSubmitting}
+              className="w-full bg-[#9c3e1f] hover:bg-[#823217] active:scale-[0.99] text-white text-sm font-semibold py-3.5 px-6 rounded-lg transition-all duration-150 shadow-md shadow-[#9c3e1f]/20 flex items-center justify-center gap-2 mt-2 cursor-pointer disabled:opacity-75"
             >
               <span>Login</span>
               <ArrowRight className="w-4 h-4" />

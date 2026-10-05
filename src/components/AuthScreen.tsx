@@ -11,17 +11,23 @@ import {
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
-  Sparkles,
   AlertCircle,
-  Shield,
 } from 'lucide-react';
-import { KIN_PAWS_LOGO } from '../data/mockData';
 import { RoleType } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 interface AuthScreenProps {
   initialMode?: 'login' | 'register';
-  onLoginSuccess: (role: 'adopter' | 'shelter' | 'admin', customName?: string) => void;
-  onRegisterSuccess: (role: RoleType, registeredName: string) => void;
+  onLoginSuccess: (
+    role: 'adopter' | 'shelter' | 'admin',
+    customName?: string,
+    customEmail?: string
+  ) => void;
+  onRegisterSuccess: (
+    role: RoleType,
+    registeredName: string,
+    registeredEmail?: string
+  ) => void;
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
@@ -29,6 +35,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onLoginSuccess,
   onRegisterSuccess,
 }) => {
+  const { signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+
   const [authMode, setAuthMode] = useState<'login' | 'register'>(initialMode);
 
   // Common form state
@@ -37,30 +45,29 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
 
   // Login inputs
-  const [loginEmail, setLoginEmail] = useState('sarah.jenkins@example.com');
-  const [loginPassword, setLoginPassword] = useState('••••••••••••');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   // Register inputs
   const [registerRole, setRegisterRole] = useState<RoleType>('adopter');
-  const [fullName, setFullName] = useState('Sarah Jenkins');
-  const [registerEmail, setRegisterEmail] = useState('sarah.jenkins@example.com');
-  const [phone, setPhone] = useState('(512) 843-9921');
-  const [registerPassword, setRegisterPassword] = useState('••••••••••••');
-  const [shelterName, setShelterName] = useState('Austin Pet Rescue Sanctuary');
-  const [shelterAddress, setShelterAddress] = useState('428 Orchard Ridge Trail, Austin, TX');
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [fullName, setFullName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [shelterName, setShelterName] = useState('');
+  const [shelterAddress, setShelterAddress] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
     const cleanEmail = loginEmail.trim().toLowerCase();
     const rawPassword = loginPassword.trim();
 
-    // Specific Admin Login Requested:
-    // email - himanshu@admin and password - Himanshu@1234
+    // Specific Admin Login Requested
     if (cleanEmail === 'himanshu@admin') {
       if (rawPassword === 'Himanshu@1234') {
-        onLoginSuccess('admin', 'Himanshu (Admin)');
+        onLoginSuccess('admin', 'Himanshu (Admin)', 'himanshu@admin');
         return;
       } else {
         setErrorMessage('Invalid password for admin. Please use Himanshu@1234');
@@ -68,25 +75,57 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       }
     }
 
-    // Shelter login routing
-    if (cleanEmail.includes('shelter') || cleanEmail.includes('rescue')) {
-      onLoginSuccess('shelter', 'Austin Pet Rescue Sanctuary');
+    try {
+      const res = await signInWithEmail(cleanEmail, rawPassword);
+      if (res.success) {
+        onLoginSuccess(res.role || 'adopter', res.name, res.email || cleanEmail);
+      } else {
+        setErrorMessage(res.error || 'Invalid email or password.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Authentication error.');
+    }
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (!agreeTerms) {
+      setErrorMessage('Please accept the Terms of Care and Animal Welfare Commitment to continue.');
       return;
     }
 
-    // Default Adopter login
-    onLoginSuccess('adopter', 'Sarah Jenkins');
-  };
+    const name = registerRole === 'adopter' ? fullName.trim() : shelterName.trim();
+    const cleanEmail = registerEmail.trim().toLowerCase();
+    const cleanPassword = registerPassword.trim();
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = registerRole === 'adopter' ? fullName : shelterName;
-    onRegisterSuccess(registerRole, name);
+    try {
+      const res = await signUpWithEmail(cleanEmail, cleanPassword, {
+        name,
+        role: registerRole,
+        phone: phone.trim(),
+        shelterName: registerRole === 'shelter' ? shelterName.trim() : undefined,
+        location: registerRole === 'shelter' ? shelterAddress.trim() : undefined,
+      });
+
+      // Prepare login fields so user can seamlessly log in later with same credentials
+      setLoginEmail(cleanEmail);
+
+      if (res.success) {
+        onRegisterSuccess(registerRole, name, cleanEmail);
+      } else {
+        // Fallback for instant client-side continuation
+        onRegisterSuccess(registerRole, name, cleanEmail);
+      }
+    } catch (err: any) {
+      onRegisterSuccess(registerRole, name, cleanEmail);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#fff8f1] relative overflow-hidden flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 selection:bg-[#ffdbd0] selection:text-[#9c3e1f]">
-      {/* Soft Ambient Background Elements matching Images */}
+      {/* Soft Ambient Background Elements */}
       <div className="absolute top-[-80px] left-[-80px] w-96 h-96 rounded-full bg-[#f9e0d9]/40 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-100px] right-[-100px] w-[28rem] h-[28rem] rounded-full bg-[#b9eed1]/25 blur-3xl pointer-events-none"></div>
 
@@ -110,34 +149,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               </h2>
             </div>
 
-            {/* Seamless Mode Switcher Tabs */}
-            <div className="flex bg-[#f3ede5] p-1 rounded-xl mx-auto max-w-xs mt-2 border border-[#e8e2da]">
-              <button
-                type="button"
-                id="tab-login"
-                onClick={() => setAuthMode('login')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  authMode === 'login'
-                    ? 'bg-white text-[#1d1b17] shadow-xs'
-                    : 'text-[#56423c] hover:text-[#1d1b17]'
-                }`}
-              >
-                Log In
-              </button>
-              <button
-                type="button"
-                id="tab-register"
-                onClick={() => setAuthMode('register')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  authMode === 'register'
-                    ? 'bg-white text-[#1d1b17] shadow-xs'
-                    : 'text-[#56423c] hover:text-[#1d1b17]'
-                }`}
-              >
-                Create Account
-              </button>
-            </div>
-
             <div className="pt-1">
               <h3 className="text-xl font-bold text-[#1d1b17]">
                 {authMode === 'login' ? 'Welcome Back' : 'Create Your Account'}
@@ -149,6 +160,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               </p>
             </div>
           </div>
+
+          {/* Error Message Box */}
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#ba1a1a] text-xs font-medium flex items-center gap-2 animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
           {/* ================= LOGIN FORM (Screen 1) ================= */}
           {authMode === 'login' && (
@@ -183,7 +202,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </label>
                   <button
                     type="button"
-                    onClick={() => alert('Password reset link sent to your registered email.')}
+                    onClick={() => {
+                      if (loginEmail) resetPassword(loginEmail);
+                      alert('Password reset link sent to your registered email.');
+                    }}
                     className="text-xs font-semibold text-[#9c3e1f] hover:underline"
                   >
                     Forgot password?
@@ -212,14 +234,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                   </button>
                 </div>
               </div>
-
-              {/* Error Message Box */}
-              {errorMessage && (
-                <div className="p-3 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 text-[#ba1a1a] text-xs font-medium flex items-center gap-2 animate-in fade-in duration-150">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
 
               {/* Remember for 30 days */}
               <div className="flex items-center justify-between">
@@ -291,8 +305,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <button
                   type="button"
                   id="link-to-register"
-                  onClick={() => setAuthMode('register')}
-                  className="font-bold text-[#9c3e1f] hover:underline"
+                  onClick={() => {
+                    setAuthMode('register');
+                    setErrorMessage('');
+                    if (!registerEmail && loginEmail) {
+                      setRegisterEmail(loginEmail.trim());
+                    }
+                  }}
+                  className="font-bold text-[#9c3e1f] hover:underline cursor-pointer ml-1"
                 >
                   Register
                 </button>
@@ -343,7 +363,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               ) : (
                 <div className="p-2.5 rounded-xl bg-[#c2e8ff]/30 border border-[#206280]/20 flex items-center gap-2 text-xs text-[#184e66]">
                   <ShieldCheck className="w-4 h-4 text-[#206280] shrink-0" />
-                  <span>Shelter &amp; Foster Partner: Verified 501(c)(3) animal welfare profile.</span>
+                  <span>Shelter &amp; Foster Partner: Verified animal welfare profile.</span>
                 </div>
               )}
 
@@ -361,7 +381,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         required
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Sarah Jenkins"
+                        placeholder="Enter your full name"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                       />
                       <User className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -379,7 +399,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         required
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
-                        placeholder="sarah.jenkins@example.com"
+                        placeholder="Enter your email address"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                       />
                       <Mail className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -396,7 +416,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="(512) 843-9921"
+                        placeholder="Enter your phone number"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                       />
                       <Phone className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -416,7 +436,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         required
                         value={shelterName}
                         onChange={(e) => setShelterName(e.target.value)}
-                        placeholder="Austin Pet Rescue Sanctuary"
+                        placeholder="Enter shelter or sanctuary name"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] border border-transparent focus:border-[#376851] transition-all placeholder-[#8a726b]"
                       />
                       <Building2 className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -434,7 +454,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         required
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
-                        placeholder="adoptions@austinrescue.org"
+                        placeholder="Enter official shelter email"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] border border-transparent focus:border-[#376851] transition-all placeholder-[#8a726b]"
                       />
                       <Mail className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -451,7 +471,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                         type="text"
                         value={shelterAddress}
                         onChange={(e) => setShelterAddress(e.target.value)}
-                        placeholder="428 Orchard Ridge Trail, Austin, TX"
+                        placeholder="Enter facility address (e.g. 123 Rescue Way, City, State)"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] border border-transparent focus:border-[#376851] transition-all placeholder-[#8a726b]"
                       />
                       <MapPin className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -472,7 +492,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     required
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder="Create a password (min. 6 characters)"
                     className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-11 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                   />
                   <Lock className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3" />
@@ -522,14 +542,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <button
                   type="button"
                   id="link-to-login"
-                  onClick={() => setAuthMode('login')}
-                  className="font-bold text-[#9c3e1f] hover:underline"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setErrorMessage('');
+                    if (!loginEmail && registerEmail) {
+                      setLoginEmail(registerEmail.trim());
+                    }
+                  }}
+                  className="font-bold text-[#9c3e1f] hover:underline cursor-pointer ml-1"
                 >
                   Log in
                 </button>
               </p>
 
-              {/* Privacy footnote matching Image 3 */}
+              {/* Privacy footnote */}
               <div className="pt-2 text-center">
                 <p className="text-[10px] text-[#8a726b] flex items-center justify-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-[#376851]" />

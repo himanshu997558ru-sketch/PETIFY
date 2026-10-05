@@ -16,10 +16,11 @@ import {
   INITIAL_SAVED_COMPANIONS,
 } from './data/mockData';
 import { AdoptionApplication, Pet, RoleType, SavedCompanion, ScreenType, UserProfile } from './types';
-import { ShelterVerificationProvider } from './context/ShelterVerificationContext';
-import { FieldWorkerPortal } from './components/verification/FieldWorkerPortal';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 function MainApp() {
+  const { session, userProfile, signOut } = useAuth();
+
   // Authentication gate: user starts at Login/Auth screen first
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
@@ -30,6 +31,22 @@ function MainApp() {
 
   // Core Application State
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
+
+  // Sync with Supabase session if authenticated
+  React.useEffect(() => {
+    if (session?.user) {
+      setIsAuthenticated(true);
+      setUser(userProfile);
+      const roleLower = userProfile.role.toLowerCase();
+      if (roleLower === 'admin') {
+        setCurrentScreen('admin');
+      } else if (roleLower === 'shelter') {
+        setCurrentScreen('shelter');
+      } else {
+        setCurrentScreen('adopter');
+      }
+    }
+  }, [session, userProfile]);
   const [pets, setPets] = useState<Pet[]>(INITIAL_PETS);
   const [applications, setApplications] = useState<AdoptionApplication[]>(INITIAL_APPLICATIONS);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
@@ -125,67 +142,82 @@ function MainApp() {
   };
 
   // Login handler
-  const handleLoginSuccess = (role: 'adopter' | 'shelter' | 'admin', customName?: string) => {
+  const handleLoginSuccess = (
+    role: 'adopter' | 'shelter' | 'admin',
+    customName?: string,
+    customEmail?: string
+  ) => {
     setIsAuthenticated(true);
+    const resolvedName =
+      customName ||
+      userProfile.name ||
+      (role === 'admin' ? 'Himanshu (Admin)' : role === 'shelter' ? 'Shelter Partner' : 'Adopter');
+    const resolvedEmail =
+      customEmail ||
+      userProfile.email ||
+      `${resolvedName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`;
+
+    const updatedProfile: UserProfile = {
+      ...userProfile,
+      name: resolvedName,
+      email: resolvedEmail,
+      role: role.charAt(0).toUpperCase() + role.slice(1),
+      status:
+        role === 'admin'
+          ? 'Sanctuary Super Admin'
+          : role === 'shelter'
+            ? 'Accredited Shelter Partner'
+            : 'Active Adopter Seeker',
+      location: userProfile.location || (role === 'shelter' ? 'Registered Sanctuary' : 'Austin, TX'),
+    };
+    setUser(updatedProfile);
+
     if (role === 'admin') {
-      setUser((prev) => ({
-        ...prev,
-        name: customName || 'Himanshu (Admin)',
-        role: 'admin',
-        location: 'National Alliance HQ',
-        status: 'Sanctuary Super Admin',
-      }));
       setCurrentScreen('admin');
-      showToast('Logged in as Sanctuary Alliance Super Admin');
+      showToast(`Welcome back, ${resolvedName}! Logged in as Super Admin.`);
     } else if (role === 'shelter') {
-      setUser((prev) => ({
-        ...prev,
-        name: customName || 'Austin Pet Rescue Sanctuary',
-        role: 'shelter',
-        location: 'Austin, TX',
-        status: 'Accredited Shelter Partner',
-      }));
       setCurrentScreen('shelter');
-      showToast('Logged in to Shelter Operations Portal');
+      showToast(`Welcome back, ${resolvedName}! Shelter Operations Portal open.`);
     } else {
-      setUser((prev) => ({
-        ...prev,
-        name: customName || prev.name || 'Sarah Jenkins',
-        role: 'adopter',
-        status: 'Active Adopter Seeker',
-      }));
       setCurrentScreen('adopter');
-      showToast(`Welcome back, ${customName || user.name}!`);
+      showToast(`Welcome back, ${resolvedName}!`);
     }
   };
 
   // Registration handler
-  const handleRegisterSuccess = (role: RoleType, registeredName: string) => {
+  const handleRegisterSuccess = (
+    role: RoleType,
+    registeredName: string,
+    registeredEmail?: string
+  ) => {
     setIsAuthenticated(true);
+    const resolvedEmail =
+      registeredEmail ||
+      userProfile.email ||
+      `${registeredName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`;
+
+    const updatedProfile: UserProfile = {
+      ...userProfile,
+      name: registeredName,
+      email: resolvedEmail,
+      role: role.charAt(0).toUpperCase() + role.slice(1),
+      status: role === 'shelter' ? 'Accredited Shelter Partner' : 'Active Adopter Seeker',
+      location: userProfile.location || (role === 'shelter' ? 'Registered Sanctuary' : 'Austin, TX'),
+    };
+    setUser(updatedProfile);
+
     if (role === 'shelter') {
-      setUser((prev) => ({
-        ...prev,
-        name: registeredName,
-        role: 'shelter',
-        location: 'Austin, TX',
-        status: 'Accredited Shelter Partner',
-      }));
       setCurrentScreen('shelter');
       showToast(`Welcome ${registeredName}! Your shelter operations portal is now open.`);
     } else {
-      setUser((prev) => ({
-        ...prev,
-        name: registeredName,
-        role: 'adopter',
-        status: 'Active Adopter Seeker',
-      }));
       setCurrentScreen('adopter');
       showToast(`Welcome ${registeredName}! Your seeker companion dashboard is ready.`);
     }
   };
 
   // Sign out handler
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await signOut();
     setIsAuthenticated(false);
     showToast('Signed out of Petify');
   };
@@ -245,6 +277,7 @@ function MainApp() {
     return (
       <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-[#f8fafc]">
         <ShelterDashboard
+          user={user}
           applications={applications}
           pets={pets}
           onOpenChat={(adopter, text) =>
@@ -300,19 +333,17 @@ function MainApp() {
     );
   }
 
-  // Inspector / Field Worker Portal View
+  // Inspector / Field Worker Portal View - Redirect to Admin Dashboard
   if (currentScreen === 'inspector') {
     return (
-      <div className="h-[100dvh] w-full overflow-hidden bg-slate-100 flex flex-col">
-        <FieldWorkerPortal
-          onNavigateScreen={(screen: ScreenType) => setCurrentScreen(screen)}
+      <div className="h-[100dvh] w-full overflow-hidden flex flex-col bg-[#f4f7fe]">
+        <AdminDashboard
+          user={user}
+          onSignOut={handleSignOut}
+          onNavigateScreen={(screen) => setCurrentScreen(screen)}
+          pets={pets}
+          applications={applications}
         />
-        {toastMessage && (
-          <div className="fixed bottom-5 right-5 z-50 bg-[#1e293b] text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>{toastMessage}</span>
-          </div>
-        )}
       </div>
     );
   }
@@ -386,8 +417,8 @@ function MainApp() {
 
 export default function App() {
   return (
-    <ShelterVerificationProvider>
+    <AuthProvider>
       <MainApp />
-    </ShelterVerificationProvider>
+    </AuthProvider>
   );
 }

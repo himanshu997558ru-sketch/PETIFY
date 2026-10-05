@@ -45,16 +45,8 @@ import {
   User,
   Shield,
 } from 'lucide-react';
-import { Pet, AdoptionApplication, UserProfile, ShelterVerificationRequest, VerifiedShelterBadge, VerificationStage, ScreenType } from '../types';
+import { Pet, AdoptionApplication, UserProfile, ScreenType } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
-import { useShelterVerification } from '../context/ShelterVerificationContext';
-import { VerificationPipelineTracker } from './verification/VerificationPipelineTracker';
-import { ShelterRegistrationModal } from './verification/ShelterRegistrationModal';
-import { AdminAssignWorkerModal } from './verification/AdminAssignWorkerModal';
-import { AdminReviewReportModal } from './verification/AdminReviewReportModal';
-import { VerifiedShelterBadgeModal } from './verification/VerifiedShelterBadgeModal';
-import { FieldWorkerInspectionModal } from './verification/FieldWorkerInspectionModal';
-import { ShelterVerificationPipelineHub } from './verification/ShelterVerificationPipelineHub';
 import { useAppStore } from '../context/AppContext';
 
 interface AdminDashboardProps {
@@ -113,16 +105,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const [viewPetModal, setViewPetModal] = useState<PetListingItem | null>(null);
 
-  // Shelter Verification Pipeline Integration (New Full Multi-Stage Workflow)
-  const { requests, fastTrackToStage, activeRequestId, setActiveRequestId } = useShelterVerification();
-  const [selectedPipelineRequest, setSelectedPipelineRequest] = useState<ShelterVerificationRequest | null>(null);
-  const [assignWorkerRequest, setAssignWorkerRequest] = useState<ShelterVerificationRequest | null>(null);
-  const [reviewReportRequest, setReviewReportRequest] = useState<ShelterVerificationRequest | null>(null);
-  const [viewBadge, setViewBadge] = useState<VerifiedShelterBadge | null>(null);
-  const [isRegisterShelterOpen, setIsRegisterShelterOpen] = useState(false);
-  const [workerInspectRequest, setWorkerInspectRequest] = useState<ShelterVerificationRequest | null>(null);
-  const [shelterStageFilter, setShelterStageFilter] = useState<string>('ALL');
-  const [shelterViewMode, setShelterViewMode] = useState<'hub' | 'list'>('hub');
+  // Shelter Directory state
 
   // Shelter Verification state (Feature 2: Admin ✅, Shelter ✅, Adopter ❌)
   const [shelterListings, setShelterListings] = useState([
@@ -465,8 +448,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {[
               { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
               { id: 'users', label: 'User Management', icon: Users },
-              { id: 'pets', label: 'Pet Verification & Browse', icon: PawPrint },
-              { id: 'shelters', label: 'Shelter Verification', icon: ShieldCheck },
+              { id: 'pets', label: 'Pet Management & Browse', icon: PawPrint },
+              { id: 'shelters', label: 'Shelter Directory', icon: Building2 },
               { id: 'applications', label: 'Applications', icon: FileText },
               { id: 'reports', label: 'Reported Listings', icon: ShieldAlert, badge: String(reportedListings.length) },
               { id: 'certificates', label: 'Adoption Certificates', icon: Award },
@@ -1603,10 +1586,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ================= SUBVIEW: SHELTER VERIFICATION PIPELINE (Full Multi-Stage Audit Flow) ================= */}
+      {/* ================= SUBVIEW: SHELTER DIRECTORY ================= */}
       {activeNav === 'shelters' && (
         <div className="space-y-6">
-          {/* Header & Metric Counter Cards */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <button
                 onClick={() => setActiveNav('dashboard')}
@@ -1614,398 +1597,75 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               >
                 ← Back to Dashboard
               </button>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-xl font-bold text-slate-900">
-                  Shelter Registration &amp; Verification Pipeline
-                </h2>
-                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  Official 7-Step Workflow
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                End-to-end accreditation: Registration → Verification Request → Worker Assignment → Physical Visit &amp; Verification → Report Review → Verified Shelter Badge.
+              <h2 className="text-xl font-bold text-slate-900">
+                Registered Shelter Partners & Facilities
+              </h2>
+              <p className="text-xs text-slate-500">
+                Affiliated rescue centers, operating capacities, animal counts, and facility details.
               </p>
             </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                Total Shelters: {shelterListings.length}
+              </span>
+            </div>
+          </div>
 
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="flex items-center gap-1 bg-[#e0f9f5] p-1 rounded-xl border border-[#99f6e4]/80">
-                <button
-                  type="button"
-                  onClick={() => setShelterViewMode('hub')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    shelterViewMode === 'hub'
-                      ? 'bg-[#0d9488] text-white shadow-xs'
-                      : 'text-[#115e59] hover:text-[#042f2e]'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>12-Step Pipeline Hub (VR-2025-105)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShelterViewMode('list')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                    shelterViewMode === 'list'
-                      ? 'bg-[#0d9488] text-white shadow-xs'
-                      : 'text-[#115e59] hover:text-[#042f2e]'
-                  }`}
-                >
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>Directory View ({requests.length})</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsRegisterShelterOpen(true)}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all"
+          {/* Shelters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {shelterListings.map((shelter) => (
+              <div
+                key={shelter.id}
+                className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all space-y-4"
               >
-                <Plus className="w-4 h-4" />
-                <span>+ Register New Shelter</span>
-              </button>
-            </div>
-          </div>
-
-          {shelterViewMode === 'hub' ? (
-            <ShelterVerificationPipelineHub
-              initialRequestId={activeRequestId || 'VR-2025-105'}
-              userRole="admin"
-            />
-          ) : (
-            <>
-              {/* KPI Metrics Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-            <div
-              onClick={() => setShelterStageFilter('ALL')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'ALL'
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-slate-300'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'ALL' ? 'text-slate-300' : 'text-slate-400'}`}>
-                Total Pipeline
-              </span>
-              <span className="text-xl font-black mt-1 block">{requests.length}</span>
-              <span className="text-[10px] opacity-75">All Registrations</span>
-            </div>
-
-            <div
-              onClick={() => setShelterStageFilter('VERIFICATION_REQUESTED')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'VERIFICATION_REQUESTED'
-                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-amber-200'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'VERIFICATION_REQUESTED' ? 'text-amber-100' : 'text-amber-600'}`}>
-                Step 2: Assign Worker
-              </span>
-              <span className="text-xl font-black mt-1 block">
-                {requests.filter((r) => r.stage === 'VERIFICATION_REQUESTED').length}
-              </span>
-              <span className="text-[10px] opacity-75">Pending Inspector</span>
-            </div>
-
-            <div
-              onClick={() => setShelterStageFilter('WORKER_ASSIGNED')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'WORKER_ASSIGNED'
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-blue-200'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'WORKER_ASSIGNED' ? 'text-blue-100' : 'text-blue-600'}`}>
-                Step 3 &amp; 4: Visits
-              </span>
-              <span className="text-xl font-black mt-1 block">
-                {requests.filter((r) => r.stage === 'WORKER_ASSIGNED' || r.stage === 'WORKER_VISITING').length}
-              </span>
-              <span className="text-[10px] opacity-75">Physical Audits Active</span>
-            </div>
-
-            <div
-              onClick={() => setShelterStageFilter('REPORT_UPLOADED')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'REPORT_UPLOADED'
-                  ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-purple-200'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'REPORT_UPLOADED' ? 'text-purple-100' : 'text-purple-600'}`}>
-                Step 5: Admin Review
-              </span>
-              <span className="text-xl font-black mt-1 block">
-                {requests.filter((r) => r.stage === 'REPORT_UPLOADED' || r.stage === 'ADMIN_REVIEW').length}
-              </span>
-              <span className="text-[10px] opacity-75">Reports Uploaded</span>
-            </div>
-
-            <div
-              onClick={() => setShelterStageFilter('VERIFIED')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'VERIFIED'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-emerald-200'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'VERIFIED' ? 'text-emerald-100' : 'text-emerald-600'}`}>
-                Step 6: Verified
-              </span>
-              <span className="text-xl font-black mt-1 block">
-                {requests.filter((r) => r.stage === 'VERIFIED').length}
-              </span>
-              <span className="text-[10px] opacity-75">Badges Issued</span>
-            </div>
-
-            <div
-              onClick={() => setShelterStageFilter('REJECTED')}
-              className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                shelterStageFilter === 'REJECTED'
-                  ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200/90 hover:border-rose-200'
-              }`}
-            >
-              <span className={`text-[10px] uppercase font-bold block ${shelterStageFilter === 'REJECTED' ? 'text-rose-100' : 'text-rose-600'}`}>
-                Step 7: Rejected
-              </span>
-              <span className="text-xl font-black mt-1 block">
-                {requests.filter((r) => r.stage === 'REJECTED').length}
-              </span>
-              <span className="text-[10px] opacity-75">Remediation Needed</span>
-            </div>
-          </div>
-
-          {/* Shelter Verification List with Integrated Flow Tracker */}
-          <div className="space-y-4">
-            {requests
-              .filter((req) => {
-                if (shelterStageFilter === 'ALL') return true;
-                if (shelterStageFilter === 'WORKER_ASSIGNED') {
-                  return req.stage === 'WORKER_ASSIGNED' || req.stage === 'WORKER_VISITING';
-                }
-                if (shelterStageFilter === 'REPORT_UPLOADED') {
-                  return req.stage === 'REPORT_UPLOADED' || req.stage === 'ADMIN_REVIEW';
-                }
-                return req.stage === shelterStageFilter;
-              })
-              .map((req) => {
-                const isVerified = req.stage === 'VERIFIED';
-                const isRejected = req.stage === 'REJECTED';
-                const isReportUploaded =
-                  req.stage === 'REPORT_UPLOADED' || req.stage === 'ADMIN_REVIEW';
-                const isWorkerAssigned =
-                  req.stage === 'WORKER_ASSIGNED' || req.stage === 'WORKER_VISITING';
-                const isPendingAssignment = req.stage === 'VERIFICATION_REQUESTED';
-
-                return (
-                  <div
-                    key={req.requestId}
-                    className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-2xs space-y-5 hover:border-slate-300 transition-all"
-                  >
-                    {/* Top Row: Shelter Meta & Main Status Actions */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <span className="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700">
-                            <Building2 className="w-5 h-5 text-emerald-700" />
-                          </span>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-base font-bold text-slate-900">
-                                {req.shelter.shelterName}
-                              </h3>
-                              <span className="font-mono text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg border border-slate-200 font-semibold">
-                                {req.shelter.legalRegNumber}
-                              </span>
-                              {isVerified && (
-                                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 bg-gradient-to-r from-amber-100 to-amber-200 text-amber-950 border border-amber-300 rounded-full shadow-2xs">
-                                  <Award className="w-3.5 h-3.5 text-amber-700" />
-                                  <span>Verified Shelter Badge</span>
-                                </span>
-                              )}
-                              {isRejected && (
-                                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 bg-rose-100 text-rose-800 border border-rose-200 rounded-full">
-                                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-                                  <span>Accreditation Rejected</span>
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                              <span>
-                                {req.shelter.streetAddress}, {req.shelter.city}, {req.shelter.state} {req.shelter.zipCode}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-500 pt-1">
-                          <span>Director: <strong className="text-slate-700">{req.shelter.directorName}</strong></span>
-                          <span>•</span>
-                          <span>Capacity: <strong className="text-slate-700">{req.shelter.animalCapacity} Animals</strong></span>
-                          <span>•</span>
-                          <span>Active Count: <strong className="text-slate-700">{req.shelter.currentAnimalCount}</strong></span>
-                          {req.assignedWorker && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1 text-blue-700 font-semibold">
-                                <UserCheck className="w-3.5 h-3.5" />
-                                Assigned: {req.assignedWorker.name} ({req.assignedWorker.badgeNumber})
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Primary Step Execution Buttons */}
-                      <div className="flex items-center gap-2 flex-wrap self-start lg:self-auto">
-                        {/* Step 2: Assign Field Worker */}
-                        {isPendingAssignment && (
-                          <button
-                            type="button"
-                            onClick={() => setAssignWorkerRequest(req)}
-                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all"
-                          >
-                            <UserCheck className="w-4 h-4" />
-                            <span>Assign Field Worker →</span>
-                          </button>
-                        )}
-
-                        {/* Step 3 & 4: Worker Visits & Physical Verification */}
-                        {isWorkerAssigned && (
-                          <button
-                            type="button"
-                            onClick={() => setWorkerInspectRequest(req)}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all"
-                          >
-                            <ClipboardCheck className="w-4 h-4" />
-                            <span>Perform Physical Inspection &amp; Upload Report →</span>
-                          </button>
-                        )}
-
-                        {/* Step 5: Admin Reviews Report */}
-                        {isReportUploaded && (
-                          <button
-                            type="button"
-                            onClick={() => setReviewReportRequest(req)}
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all"
-                          >
-                            <FileCheck className="w-4 h-4 text-indigo-200" />
-                            <span>Admin Reviews Report &amp; Grant Badge →</span>
-                          </button>
-                        )}
-
-                        {/* Step 6: Verified Shelter Badge View */}
-                        {isVerified && req.badge && (
-                          <button
-                            type="button"
-                            onClick={() => setViewBadge(req.badge!)}
-                            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all"
-                          >
-                            <Award className="w-4 h-4 text-amber-300" />
-                            <span>View Verified Shelter Badge &amp; Seal</span>
-                          </button>
-                        )}
-
-                        {/* Re-Assign / Re-Audit Option for any request */}
-                        <button
-                          type="button"
-                          onClick={() => setAssignWorkerRequest(req)}
-                          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
-                          title="Assign or reassign field auditor"
-                        >
-                          {req.assignedWorker ? 'Reassign Auditor' : 'Assign Officer'}
-                        </button>
-                      </div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                      <Building2 className="w-6 h-6" />
                     </div>
-
-                    {/* Integrated 7-Step Verification Pipeline Tracker */}
-                    <div className="pt-2">
-                      <VerificationPipelineTracker request={req} />
-                    </div>
-
-                    {/* Fast-Track Simulation Bar (Helps test every stage of the workflow interactively) */}
-                    <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 p-3 rounded-2xl text-[11px]">
-                      <div className="flex items-center gap-1.5 text-slate-500">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="font-semibold text-slate-700">Test Pipeline Fast-Track:</span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'VERIFICATION_REQUESTED');
-                            triggerToast(`${req.shelter.shelterName} reset to Verification Requested`);
-                          }}
-                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium"
-                        >
-                          1. Reg / Request
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'WORKER_ASSIGNED');
-                            triggerToast(`Worker assigned to ${req.shelter.shelterName}`);
-                          }}
-                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium"
-                        >
-                          2. Worker Assigned
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'WORKER_VISITING');
-                            triggerToast(`Worker visit started at ${req.shelter.shelterName}`);
-                          }}
-                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium"
-                        >
-                          3. Physical Visit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'REPORT_UPLOADED');
-                            triggerToast(`Report uploaded for ${req.shelter.shelterName}`);
-                          }}
-                          className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-700 font-medium"
-                        >
-                          4. Report Uploaded
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'VERIFIED');
-                            triggerToast(`Verified Shelter Badge issued to ${req.shelter.shelterName}!`);
-                          }}
-                          className="px-2.5 py-1 bg-emerald-100 border border-emerald-300 rounded-lg hover:bg-emerald-200 text-emerald-900 font-bold"
-                        >
-                          5. Verified (Badge)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            fastTrackToStage(req.requestId, 'REJECTED');
-                            triggerToast(`Verification rejected for ${req.shelter.shelterName}`);
-                          }}
-                          className="px-2.5 py-1 bg-rose-100 border border-rose-300 rounded-lg hover:bg-rose-200 text-rose-900 font-bold"
-                        >
-                          6. Rejected
-                        </button>
-                      </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                        {shelter.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        {shelter.regNumber}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+
+                <div className="space-y-2 text-xs pt-1 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span className="text-slate-400">Location:</span>
+                    <span className="font-semibold text-slate-800">{shelter.city}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span className="text-slate-400">Capacity:</span>
+                    <span className="font-semibold text-slate-800">{shelter.capacity}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span className="text-slate-400">Status:</span>
+                    <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[11px]">
+                      {shelter.verificationStatus || 'Active Partner'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => triggerToast(`Contacting ${shelter.name} administration`)}
+                    className="flex-1 py-2 text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition-colors"
+                  >
+                    Contact Partner
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-          </>
-          )}
         </div>
       )}
 
-      {/* ================= SUBVIEW: REPORTED LISTINGS (Feature 15) ================= */}
       {activeNav === 'reports' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2282,60 +1942,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         />
       )}
 
-      {/* ================= MODAL: SHELTER REGISTRATION (Step 1) ================= */}
-      {isRegisterShelterOpen && (
-        <ShelterRegistrationModal
-          onClose={() => setIsRegisterShelterOpen(false)}
-          onSuccess={() => {
-            triggerToast('Shelter registration and verification request successfully initiated!');
-            setIsRegisterShelterOpen(false);
-          }}
-        />
-      )}
-
-      {/* ================= MODAL: ADMIN ASSIGN WORKER (Step 3) ================= */}
-      {assignWorkerRequest && (
-        <AdminAssignWorkerModal
-          request={assignWorkerRequest}
-          onClose={() => setAssignWorkerRequest(null)}
-          onSuccess={() => {
-            triggerToast(`Field worker assigned to ${assignWorkerRequest.shelter.shelterName}!`);
-            setAssignWorkerRequest(null);
-          }}
-        />
-      )}
-
-      {/* ================= MODAL: WORKER VISITS & PHYSICAL VERIFICATION (Steps 4, 5, 6) ================= */}
-      {workerInspectRequest && (
-        <FieldWorkerInspectionModal
-          request={workerInspectRequest}
-          onClose={() => setWorkerInspectRequest(null)}
-          onSuccess={() => {
-            triggerToast(`Verification report uploaded for ${workerInspectRequest.shelter.shelterName}!`);
-            setWorkerInspectRequest(null);
-          }}
-        />
-      )}
-
-      {/* ================= MODAL: ADMIN REVIEWS REPORT & DECISION (Step 7) ================= */}
-      {reviewReportRequest && (
-        <AdminReviewReportModal
-          request={reviewReportRequest}
-          onClose={() => setReviewReportRequest(null)}
-          onSuccess={() => {
-            triggerToast(`Accreditation review completed for ${reviewReportRequest.shelter.shelterName}!`);
-            setReviewReportRequest(null);
-          }}
-        />
-      )}
-
-      {/* ================= MODAL: VERIFIED SHELTER BADGE ================= */}
-      {viewBadge && (
-        <VerifiedShelterBadgeModal
-          badge={viewBadge}
-          onClose={() => setViewBadge(null)}
-        />
-      )}
 
       {/* Toast Notification Banner */}
       {toastMessage && (

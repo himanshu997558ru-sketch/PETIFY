@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   PawPrint,
   Search,
@@ -34,7 +34,6 @@ import {
 import { AdoptionApplication, Pet, SavedCompanion, ScreenType, ShelterMessage, UserProfile } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
 import { ReportListingModal } from './ReportListingModal';
-import { AppointmentRequestModal } from './AppointmentRequestModal';
 import { useAppStore } from '../context/AppContext';
 import { CatBreedsDirectory } from './CatBreedsDirectory';
 import { CAT_BREEDS_DIRECTORY } from '../data/catBreedsData';
@@ -86,10 +85,27 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
   // Selected Pet for Details Modal
   const [activePetDetail, setActivePetDetail] = useState<any | null>(null);
 
-  // Modals state for Adoption Certificate, Report Listing, and Appointment Request
+  // Modals state for Adoption Certificate and Report Listing
   const [selectedCert, setSelectedCert] = useState<CertificateData | null>(null);
   const [reportPet, setReportPet] = useState<any | null>(null);
-  const [appointmentPet, setAppointmentPet] = useState<any | null>(null);
+
+  // Adopter Profile Form State linked with user
+  const [profileName, setProfileName] = useState(user.name || '');
+  const [profileEmail, setProfileEmail] = useState(user.email || '');
+  const [profileResidence, setProfileResidence] = useState(
+    user.livingSpace || 'Single Family Home with Fenced Yard (0.25 Acres)'
+  );
+  const [profileLocation, setProfileLocation] = useState(user.location || 'Austin, TX');
+  const [profileVet, setProfileVet] = useState(
+    'Austin Animal Hospital • Dr. Catherine Vance'
+  );
+
+  useEffect(() => {
+    if (user.name) setProfileName(user.name);
+    if (user.email) setProfileEmail(user.email);
+    if (user.livingSpace) setProfileResidence(user.livingSpace);
+    if (user.location) setProfileLocation(user.location);
+  }, [user]);
 
   // Connect to shared store
   const {
@@ -226,7 +242,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
             { id: 'favorites', label: 'Saved Favorites', icon: Heart, badge: String(favoritedNames.length) },
             { id: 'applications', label: 'My Applications', icon: FileText, badge: String(adopterApps.length) },
             { id: 'status', label: 'Application Tracking', icon: Clock },
-            { id: 'appointments', label: 'Appointment Requests', icon: Calendar, badge: String(adopterAppointments.length) },
             { id: 'messages', label: 'Messages', icon: Mail, badge: '2' },
             { id: 'history', label: 'Adoption History & Certs', icon: Award },
             { id: 'profile', label: 'Profile', icon: User },
@@ -351,13 +366,13 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
               >
                 <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80"
-                  alt="Riya Sharma"
+                  src={user?.avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80"}
+                  alt={user?.name || "Adopter"}
                   className="w-8 h-8 rounded-full object-cover border border-[#14b8a6]/40"
                 />
                 <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-slate-900 leading-tight">Riya Sharma</p>
-                  <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">Adopter</p>
+                  <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Adopter'}</p>
+                  <p className="text-[10px] font-medium text-slate-500 leading-none mt-0.5">{user?.role || 'Adopter'}</p>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
@@ -365,10 +380,10 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               {isProfileMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 text-xs">
                   <div className="px-4 py-2 border-b border-slate-100">
-                    <p className="font-bold text-slate-900">Riya Sharma</p>
-                    <p className="text-slate-500 text-[11px]">riya.sharma@example.com</p>
+                    <p className="font-bold text-slate-900">{user?.name || 'Adopter'}</p>
+                    <p className="text-slate-500 text-[11px] font-mono">{user?.email || 'adopter@petify.org'}</p>
                     <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e0f9f5] text-[#0f766e] border border-[#99f6e4]">
-                      Verified Adopter
+                      {user?.status || 'Verified Adopter'}
                     </span>
                   </div>
 
@@ -599,19 +614,12 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         </div>
 
                         {/* View Details Button */}
-                        <div className="mt-3.5 flex items-center gap-1.5">
+                        <div className="mt-3.5">
                           <button
                             onClick={() => setActivePetDetail(pet)}
-                            className="flex-1 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs"
+                            className="w-full py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs"
                           >
                             View Details
-                          </button>
-                          <button
-                            onClick={() => setAppointmentPet(pet)}
-                            className="p-2 bg-[#e0f9f5] hover:bg-[#ccfbf1] text-[#0f766e] rounded-xl transition-colors"
-                            title="Schedule Meet & Greet"
-                          >
-                            <Calendar className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -1097,7 +1105,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                               {app.status === 'Approved' ? '✓ Adoption Approved' : app.status === 'Rejected' ? '✕ Application Declined' : '⏳ In Review'}
                             </span>
 
-                            {app.status === 'Approved' ? (
+                            {app.status === 'Approved' && (
                               <button
                                 onClick={() => {
                                   setSelectedCert({
@@ -1117,20 +1125,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                               >
                                 <Award className="w-3.5 h-3.5" />
                                 <span>View Official Certificate</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setAppointmentPet({
-                                    name: app.petName,
-                                    species: app.petType,
-                                    shelterName: app.shelter,
-                                  });
-                                }}
-                                className="px-3.5 py-1.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
-                              >
-                                <Calendar className="w-3.5 h-3.5" />
-                                <span>Schedule Visit</span>
                               </button>
                             )}
                           </div>
@@ -1255,7 +1249,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {app.step === 4 ? (
+                        {app.step === 4 && (
                           <button
                             onClick={() => {
                               setSelectedCert({
@@ -1275,20 +1269,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                           >
                             <Award className="w-3.5 h-3.5" />
                             <span>View Adoption Certificate</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setAppointmentPet({
-                                name: app.petName,
-                                species: app.petType,
-                                shelterName: app.shelter,
-                              });
-                            }}
-                            className="px-3.5 py-1.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
-                          >
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>Schedule Visit</span>
                           </button>
                         )}
                       </div>
@@ -1341,81 +1321,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
             </div>
           )}
 
-          {/* ================= SUBVIEW: APPOINTMENT REQUESTS (Feature 13: Adopter ✅) ================= */}
-          {activeNav === 'appointments' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <button
-                    onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
-                  >
-                    ← Back to Dashboard
-                  </button>
-                  <h2 className="text-xl font-bold text-slate-900">Meet &amp; Greet Appointments</h2>
-                  <p className="text-xs text-slate-500">Your scheduled visits and video screening meetings with shelter animals.</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setAppointmentPet({
-                      name: 'Max',
-                      species: 'Dog',
-                      shelterName: 'Happy Paws Shelter',
-                    });
-                  }}
-                  className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl shadow-2xs inline-flex items-center gap-1.5"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Request New Appointment</span>
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {adopterAppointments.map((apt) => (
-                  <div
-                    key={apt.id}
-                    className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-[#99f6e4] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#0f766e] bg-[#e0f9f5] px-2.5 py-0.5 rounded-full border border-[#99f6e4]">
-                          {apt.type}
-                        </span>
-                        <h4 className="text-sm font-bold text-slate-900">Pet: {apt.petName}</h4>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        Shelter: <strong className="text-slate-800">{apt.shelterName}</strong>
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Date &amp; Time: <strong className="text-slate-800">{apt.date}</strong> at <strong className="text-slate-800">{apt.timeSlot}</strong>
-                      </p>
-                      <p className="text-[11px] text-slate-500 italic">Notes: "{apt.notes}"</p>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`text-xs font-bold px-3 py-1.5 rounded-xl border flex items-center gap-1.5 ${
-                          apt.status === 'Confirmed'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}
-                      >
-                        {apt.status === 'Confirmed' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                        <span>{apt.status}</span>
-                      </span>
-                      <button
-                        onClick={() => onOpenChatModal(apt.shelterName, `Hi! I am inquiring about our scheduled appointment for ${apt.petName} on ${apt.date}.`)}
-                        className="px-3.5 py-2 bg-[#e0f9f5] hover:bg-[#ccfbf1] text-[#0f766e] border border-[#99f6e4] text-xs font-semibold rounded-xl transition-colors"
-                      >
-                        Message Shelter
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ================= SUBVIEW: MESSAGES ================= */}
           {activeNav === 'messages' && (
             <div className="space-y-6">
@@ -1432,7 +1337,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
 
               <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs space-y-3">
                 {[
-                  { shelter: 'Happy Paws Shelter', message: 'Hi Riya! We reviewed your profile and Luna would love to meet you this Saturday at 11 AM.', time: '20 mins ago', unread: true },
+                  { shelter: 'Happy Paws Shelter', message: `Hi ${user?.name || 'there'}! We reviewed your profile and Luna would love to meet you this Saturday at 11 AM.`, time: '20 mins ago', unread: true },
                   { shelter: 'City Animal Rescue', message: 'Thank you for your inquiry regarding Max! Please provide your landlord pet approval letter.', time: 'Yesterday', unread: false },
                 ].map((m, i) => (
                   <div
@@ -1527,15 +1432,53 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <label className="text-xs font-bold text-slate-700 block mb-1">Full Name</label>
                   <input
                     type="text"
-                    defaultValue="Riya Sharma"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="Enter full name"
                     className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Residence Type</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={profileEmail}
+                    onChange={(e) => setProfileEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Account Role & Status</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={user?.role || 'Adopter'}
+                      className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 focus:outline-none"
+                    />
+                    <span className="text-[11px] font-semibold text-[#0f766e] bg-[#e0f9f5] px-3 py-2 rounded-xl border border-[#99f6e4]">
+                      {user?.status || 'Verified Profile'}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Residence & Living Environment</label>
                   <input
                     type="text"
-                    defaultValue="Single Family Home with Fenced Yard (0.25 Acres)"
+                    value={profileResidence}
+                    onChange={(e) => setProfileResidence(e.target.value)}
+                    placeholder="e.g. Single Family Home with Fenced Yard"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={profileLocation}
+                    onChange={(e) => setProfileLocation(e.target.value)}
+                    placeholder="e.g. Austin, TX"
                     className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
                   />
                 </div>
@@ -1543,13 +1486,14 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <label className="text-xs font-bold text-slate-700 block mb-1">Veterinarian Reference</label>
                   <input
                     type="text"
-                    defaultValue="Austin Animal Hospital • Dr. Catherine Vance"
+                    value={profileVet}
+                    onChange={(e) => setProfileVet(e.target.value)}
                     className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
                   />
                 </div>
                 <button
                   onClick={() => triggerToast('Adopter profile saved successfully!')}
-                  className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl shadow-2xs"
+                  className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors"
                 >
                   Update Information
                 </button>
@@ -1697,19 +1641,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Appointment Request (Feature 13: Adopter ✅) */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const petForApt = activePetDetail;
-                      setActivePetDetail(null);
-                      setAppointmentPet(petForApt);
-                    }}
-                    className="px-3.5 py-2 bg-[#e0f9f5] hover:bg-[#ccfbf1] text-[#0f766e] border border-[#99f6e4] rounded-xl font-semibold flex items-center gap-1.5"
-                  >
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Meet &amp; Greet</span>
-                  </button>
                   {/* Adoption Application (Feature 8: Adopter ✅) */}
                   <button
                     type="button"
@@ -1765,29 +1696,6 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               details,
             });
             triggerToast(`Report registered for ${reportPet.name} (${reason}) & forwarded to Admin Trust & Safety!`);
-          }}
-        />
-      )}
-
-      {/* ================= MODAL: APPOINTMENT REQUEST (Feature 13: Adopter ✅) ================= */}
-      {appointmentPet && (
-        <AppointmentRequestModal
-          petName={appointmentPet.name}
-          shelterName={appointmentPet.shelterName || 'Happy Paws Shelter'}
-          onClose={() => setAppointmentPet(null)}
-          onSubmit={(apt) => {
-            requestAppointment({
-              petName: apt.petName,
-              shelterName: apt.shelterName || 'Happy Paws Shelter',
-              adopter: user.name || 'Riya Sharma',
-              email: user.email || 'riya.sharma@example.com',
-              phone: (user as any).phone || '+91 98765 43210',
-              date: apt.date,
-              timeSlot: apt.timeSlot,
-              type: apt.type as any,
-              notes: apt.notes,
-            });
-            triggerToast(`Meet & Greet requested with ${apt.shelterName} for ${apt.petName} & synced with Shelter!`);
           }}
         />
       )}

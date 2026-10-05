@@ -12,10 +12,11 @@ import {
   ArrowRight,
   ShieldCheck,
   Heart,
+  Loader2,
 } from 'lucide-react';
 import { KIN_PAWS_LOGO } from '../data/mockData';
 import { RoleType, ScreenType } from '../types';
-import { useShelterVerification } from '../context/ShelterVerificationContext';
+import { useAuth } from '../context/AuthContext';
 
 interface RegisterScreenProps {
   onNavigate: (screen: ScreenType) => void;
@@ -29,61 +30,83 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
   const [role, setRole] = useState<RoleType>('adopter');
 
   // Adopter Form State
-  const [adopterName, setAdopterName] = useState('Eleanor Vance');
-  const [adopterEmail, setAdopterEmail] = useState('eleanor@example.com');
-  const [adopterPhone, setAdopterPhone] = useState('(555) 349-2018');
+  const [adopterName, setAdopterName] = useState('');
+  const [adopterEmail, setAdopterEmail] = useState('');
+  const [adopterPhone, setAdopterPhone] = useState('');
   const [adopterPassword, setAdopterPassword] = useState('');
   const [adopterConfirm, setAdopterConfirm] = useState('');
 
   // Shelter Form State
-  const [shelterName, setShelterName] = useState('Pine Valley Animal Haven');
-  const [shelterContact, setShelterContact] = useState('Marcus Sterling (Director)');
-  const [shelterEmail, setShelterEmail] = useState('adoptions@pinehaven.org');
-  const [shelterPhone, setShelterPhone] = useState('(555) 782-9011');
-  const [shelterStreet, setShelterStreet] = useState('428 Orchard Ridge Trail');
-  const [shelterCity, setShelterCity] = useState('Portland');
-  const [shelterState, setShelterState] = useState('OR');
-  const [shelterZip, setShelterZip] = useState('97201');
+  const [shelterName, setShelterName] = useState('');
+  const [shelterContact, setShelterContact] = useState('');
+  const [shelterEmail, setShelterEmail] = useState('');
+  const [shelterPhone, setShelterPhone] = useState('');
+  const [shelterStreet, setShelterStreet] = useState('');
+  const [shelterCity, setShelterCity] = useState('');
+  const [shelterState, setShelterState] = useState('');
+  const [shelterZip, setShelterZip] = useState('');
   const [shelterPassword, setShelterPassword] = useState('');
   const [shelterConfirm, setShelterConfirm] = useState('');
 
-  const [termsAccepted, setTermsAccepted] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const { registerShelter } = useShelterVerification();
+  const [confirmationNotice, setConfirmationNotice] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { signUpWithEmail, supabaseProjectId } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!termsAccepted) {
       setErrorMsg('Please accept the Terms of Care and Welfare Commitment to continue.');
       return;
     }
     setErrorMsg('');
+    setConfirmationNotice(null);
 
-    if (role === 'shelter') {
-      // Step 1 & 2: Shelter Registration initiates Verification Request automatically
-      registerShelter({
-        shelterName: shelterName.trim() || 'Pine Valley Animal Haven',
-        legalRegNumber: `NGO-TX-${Math.floor(1000 + Math.random() * 9000)}`,
-        taxId: 'XX-XXXXXXX',
-        shelterType: 'Sanctuary',
-        directorName: shelterContact.trim() || 'Marcus Sterling',
-        contactEmail: shelterEmail.trim() || 'adoptions@pinehaven.org',
-        contactPhone: shelterPhone.trim() || '(555) 782-9011',
-        streetAddress: shelterStreet.trim() || '428 Orchard Ridge Trail',
-        city: shelterCity.trim() || 'Portland',
-        state: shelterState.trim() || 'OR',
-        zipCode: shelterZip.trim() || '97201',
-        animalCapacity: 45,
-        currentAnimalCount: 18,
-        speciesHandled: ['Dogs', 'Cats'],
-        facilities: ['Insulated Kennels', 'Quarantine Ward', 'Play Yards'],
-        licenseDocName: 'license_compliance_2025.pdf',
-        sanitaryCertDocName: 'sanitation_disinfection_sop.pdf',
-      });
+    const targetPassword = role === 'adopter' ? adopterPassword : shelterPassword;
+    const targetConfirm = role === 'adopter' ? adopterConfirm : shelterConfirm;
+    const targetEmail = role === 'adopter' ? adopterEmail : shelterEmail;
+    const name = role === 'adopter' ? adopterName : shelterName;
+
+    if (!targetPassword) {
+      setErrorMsg('Please enter a secure password.');
+      return;
+    }
+    if (targetPassword.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long for Supabase security.');
+      return;
+    }
+    if (targetPassword !== targetConfirm) {
+      setErrorMsg('Passwords do not match. Please verify both password fields.');
+      return;
     }
 
-    const name = role === 'adopter' ? adopterName : shelterName;
-    onRegisterSuccess(role, name);
+    setIsSubmitting(true);
+    try {
+      const res = await signUpWithEmail(targetEmail, targetPassword, {
+        name,
+        role,
+        phone: role === 'adopter' ? adopterPhone : shelterPhone,
+        shelterName: role === 'shelter' ? shelterName : undefined,
+        location: role === 'shelter' ? `${shelterCity}, ${shelterState}` : undefined,
+      });
+
+      if (res.success) {
+        if (res.requiresEmailConfirmation) {
+          setConfirmationNotice(
+            `Account successfully registered in Supabase for ${targetEmail}! If your Supabase project enforces email confirmation, please check your inbox to confirm your email, then proceed to Log in.`
+          );
+        } else {
+          onRegisterSuccess(role, name);
+        }
+      } else {
+        setErrorMsg(res.error || 'Failed to create Supabase account.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An unexpected error occurred during Supabase registration.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -193,7 +216,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                       required
                       value={adopterName}
                       onChange={(e) => setAdopterName(e.target.value)}
-                      placeholder="Eleanor Vance"
+                      placeholder="Enter your full name"
                       className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] transition-all"
                     />
                     <User className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -212,7 +235,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         required
                         value={adopterEmail}
                         onChange={(e) => setAdopterEmail(e.target.value)}
-                        placeholder="eleanor@example.com"
+                        placeholder="Enter your email address"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] transition-all"
                       />
                       <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -228,7 +251,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         type="tel"
                         value={adopterPhone}
                         onChange={(e) => setAdopterPhone(e.target.value)}
-                        placeholder="(555) 349-2018"
+                        placeholder="Enter phone number (e.g. (555) 000-0000)"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] transition-all"
                       />
                       <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -248,7 +271,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         required
                         value={adopterPassword}
                         onChange={(e) => setAdopterPassword(e.target.value)}
-                        placeholder="At least 8 characters"
+                        placeholder="Create a password (min. 6 characters)"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] transition-all"
                       />
                       <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -290,7 +313,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         required
                         value={shelterName}
                         onChange={(e) => setShelterName(e.target.value)}
-                        placeholder="Pine Valley Animal Haven"
+                        placeholder="Enter shelter or organization name"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                       />
                       <Building2 className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -307,7 +330,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         required
                         value={shelterContact}
                         onChange={(e) => setShelterContact(e.target.value)}
-                        placeholder="Marcus Sterling (Director)"
+                        placeholder="Director or coordinator name"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                       />
                       <Contact className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -327,7 +350,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         required
                         value={shelterEmail}
                         onChange={(e) => setShelterEmail(e.target.value)}
-                        placeholder="adoptions@pinehaven.org"
+                        placeholder="Enter official email address"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                       />
                       <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -343,7 +366,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                         type="tel"
                         value={shelterPhone}
                         onChange={(e) => setShelterPhone(e.target.value)}
-                        placeholder="(555) 782-9011"
+                        placeholder="Enter shelter phone number"
                         className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                       />
                       <Phone className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -362,7 +385,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                       required
                       value={shelterStreet}
                       onChange={(e) => setShelterStreet(e.target.value)}
-                      placeholder="428 Orchard Ridge Trail"
+                      placeholder="Enter street address"
                       className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 pl-11 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                     />
                     <MapPin className="w-4 h-4 absolute left-3.5 top-3.5 text-[#8a726b] pointer-events-none" />
@@ -379,7 +402,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                       type="text"
                       value={shelterCity}
                       onChange={(e) => setShelterCity(e.target.value)}
-                      placeholder="Portland"
+                      placeholder="City"
                       className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                     />
                   </div>
@@ -392,7 +415,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                       type="text"
                       value={shelterState}
                       onChange={(e) => setShelterState(e.target.value)}
-                      placeholder="OR"
+                      placeholder="State"
                       className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                     />
                   </div>
@@ -405,7 +428,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
                       type="text"
                       value={shelterZip}
                       onChange={(e) => setShelterZip(e.target.value)}
-                      placeholder="97201"
+                      placeholder="Zip Code"
                       className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-lg px-4 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#376851] transition-all"
                     />
                   </div>
@@ -476,14 +499,24 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({
             <button
               id="register-submit-btn"
               type="submit"
-              className={`w-full text-white text-sm font-semibold py-3.5 px-6 rounded-lg transition-all duration-150 shadow-md flex items-center justify-center gap-2 mt-2 ${
+              disabled={isSubmitting}
+              className={`w-full text-white text-sm font-semibold py-3.5 px-6 rounded-lg transition-all duration-150 shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-75 disabled:cursor-not-allowed cursor-pointer ${
                 role === 'adopter'
                   ? 'bg-[#9c3e1f] hover:bg-[#823217] shadow-[#9c3e1f]/20'
                   : 'bg-[#376851] hover:bg-[#285943] shadow-[#376851]/20'
               }`}
             >
-              <span>Create Account</span>
-              <ArrowRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Registering with Supabase...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
 
             {/* Divider */}
