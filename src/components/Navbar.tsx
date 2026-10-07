@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, X, Heart, Shield, CheckCircle2, Home, User, LogOut, ArrowRight, Bell, ClipboardCheck } from 'lucide-react';
 import { KIN_PAWS_LOGO } from '../data/mockData';
 import { ScreenType, UserProfile } from '../types';
+import { UserAvatar } from './UserAvatar';
 
 interface NavbarProps {
   currentScreen: ScreenType;
@@ -101,14 +102,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="user-profile-toggle"
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-            className="flex items-center gap-2 p-1 rounded-full border-2 border-transparent hover:border-[#ddc0b8] transition-all"
+            className="flex items-center gap-2 p-1 rounded-full border-2 border-transparent hover:border-[#ddc0b8] transition-all cursor-pointer"
             aria-label="User profile"
           >
-            <img
-              src={user.avatarUrl}
-              alt={user.name}
-              className="w-9 h-9 rounded-full object-cover ring-2 ring-[#ddc0b8]/60"
-            />
+            <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="md" />
           </button>
 
           {/* User Dropdown */}
@@ -190,9 +187,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       {menuOpen && (
         <div className="md:hidden bg-white border-b border-[#e8e2da] px-4 py-4 space-y-3">
           <div className="flex items-center gap-3 p-3 bg-[#f9f3eb] rounded-lg">
-            <img src={user.avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+            <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="lg" />
             <div>
               <p className="font-semibold text-sm text-[#1d1b17]">{user.name}</p>
+              {user.email && (
+                <p className="text-xs text-[#8a726b] font-mono truncate">{user.email}</p>
+              )}
               <p className="text-xs text-[#56423c]">{user.location} • {user.status}</p>
             </div>
           </div>

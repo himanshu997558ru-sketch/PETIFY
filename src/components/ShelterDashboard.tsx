@@ -35,6 +35,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { AdoptionApplication, Pet, ScreenType, UserProfile, VerifiedShelterBadge } from '../types';
+import { PETIFY_LOGO } from '../data/mockData';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
 import { AdopterCommunicationHub } from './AdopterCommunicationHub';
 import { CatBreedsDirectory } from './CatBreedsDirectory';
@@ -42,6 +43,7 @@ import { CAT_BREEDS_DIRECTORY } from '../data/catBreedsData';
 import { DogBreedsDirectory } from './DogBreedsDirectory';
 import { DOG_BREEDS_DIRECTORY } from '../data/dogBreedsData';
 import { useAppStore } from '../context/AppContext';
+import { UserAvatar } from './UserAvatar';
 
 interface ShelterDashboardProps {
   user?: UserProfile;
@@ -376,7 +378,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
         <div className="p-5 sm:p-6 pb-5 flex items-center justify-between border-b border-emerald-950/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-emerald-900/40">
-              <img src="/petify-logo.svg" alt="Petify Logo" className="w-full h-full object-contain" />
+              <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
@@ -555,12 +557,12 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
-                <img
-                  src={user?.avatarUrl || "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=120&q=80"}
-                  alt={user?.name || "Happy Paws Shelter"}
-                  className="w-8 h-8 rounded-full object-cover border border-emerald-500/40"
+                <UserAvatar
+                  name={user?.name || 'Happy Paws Shelter'}
+                  avatarUrl={user?.avatarUrl}
+                  size="sm"
                 />
                 <div className="text-left hidden sm:block">
                   <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Happy Paws Shelter'}</p>

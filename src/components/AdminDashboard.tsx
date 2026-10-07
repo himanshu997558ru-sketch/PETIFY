@@ -48,6 +48,8 @@ import {
 import { Pet, AdoptionApplication, UserProfile, ScreenType } from '../types';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
 import { useAppStore } from '../context/AppContext';
+import { UserAvatar } from './UserAvatar';
+import { PETIFY_LOGO } from '../data/mockData';
 
 interface AdminDashboardProps {
   user?: UserProfile;
@@ -425,7 +427,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="p-6 pb-5 flex items-center justify-between border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs border border-slate-200 shrink-0">
-                <img src="/petify-logo.svg" alt="Petify Logo" className="w-full h-full object-contain" />
+                <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#0f172a] tracking-tight leading-none">Petify</h1>
@@ -602,12 +604,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                className="flex items-center gap-2.5 p-1.5 pl-2 rounded-full hover:bg-slate-100 transition-all"
+                className="flex items-center gap-2.5 p-1.5 pl-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  A
-                </div>
-                <span className="text-sm font-semibold text-[#0f172a] hidden sm:inline">Admin</span>
+                <UserAvatar
+                  name={user?.name || 'Himanshu (Admin)'}
+                  avatarUrl={user?.avatarUrl}
+                  size="sm"
+                />
+                <span className="text-sm font-semibold text-[#0f172a] hidden sm:inline">{user?.name || 'Admin'}</span>
                 <ChevronDown className="w-4 h-4 text-slate-400" />
               </button>
 
@@ -642,7 +646,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div>
               <h2 className="text-2xl font-bold text-[#0f172a] flex items-center gap-2">
                 <span>👋</span>
-                <span>Good Morning, Admin!</span>
+                <span>Good Morning, {user?.name || 'Admin'}!</span>
               </h2>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Here&apos;s what&apos;s happening on your platform today.

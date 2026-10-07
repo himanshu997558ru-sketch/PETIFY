@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { LandingPage } from './components/LandingPage';
 import { AuthScreen } from './components/AuthScreen';
 import { AdopterDashboard } from './components/AdopterDashboard';
 import { ShelterDashboard } from './components/ShelterDashboard';
@@ -21,8 +22,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 function MainApp() {
   const { session, userProfile, signOut } = useAuth();
 
-  // Authentication gate: user starts at Login/Auth screen first
+  // Navigation & Authentication flow: starts at Landing page by default
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [unauthView, setUnauthView] = useState<'landing' | 'auth'>('landing');
   const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
   const [adminActiveTab, setAdminActiveTab] = useState<string>('overview');
 
@@ -219,15 +221,41 @@ function MainApp() {
   const handleSignOut = async () => {
     await signOut();
     setIsAuthenticated(false);
+    setUnauthView('landing');
     showToast('Signed out of Petify');
   };
 
-  // ================= 1. AUTHENTICATION FIRST FLOW =================
+  // ================= 1. PUBLIC LANDING & AUTH FLOW =================
   if (!isAuthenticated) {
+    if (unauthView === 'landing') {
+      return (
+        <div className="min-h-screen bg-[#fffdfa] text-[#121c2a] flex flex-col font-sans">
+          <LandingPage
+            onOpenLogin={() => {
+              setAuthInitialMode('login');
+              setUnauthView('auth');
+            }}
+            onOpenRegister={() => {
+              setAuthInitialMode('register');
+              setUnauthView('auth');
+            }}
+          />
+
+          {toastMessage && (
+            <div className="fixed bottom-6 right-6 z-50 bg-[#121c2a] text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-xl border border-white/10 flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-200">
+              <span className="w-2 h-2 rounded-full bg-[#2dd4bf]"></span>
+              <span>{toastMessage}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-[#fff8f1] text-[#1d1b17] flex flex-col font-sans">
         <AuthScreen
           initialMode={authInitialMode}
+          onBackToLanding={() => setUnauthView('landing')}
           onLoginSuccess={handleLoginSuccess}
           onRegisterSuccess={handleRegisterSuccess}
         />

@@ -32,9 +32,11 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { AdoptionApplication, Pet, SavedCompanion, ScreenType, ShelterMessage, UserProfile } from '../types';
+import { PETIFY_LOGO } from '../data/mockData';
 import { AdoptionCertificateModal, CertificateData } from './AdoptionCertificateModal';
 import { ReportListingModal } from './ReportListingModal';
 import { useAppStore } from '../context/AppContext';
+import { UserAvatar } from './UserAvatar';
 import { CatBreedsDirectory } from './CatBreedsDirectory';
 import { CAT_BREEDS_DIRECTORY } from '../data/catBreedsData';
 import { DogBreedsDirectory } from './DogBreedsDirectory';
@@ -216,7 +218,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
         <div className="p-5 sm:p-6 pb-5 flex items-center justify-between border-b border-[#99f6e4]/70">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-[#99f6e4]">
-              <img src="/petify-logo.svg" alt="Petify Logo" className="w-full h-full object-contain" />
+              <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-[#042f2e] flex items-center gap-1.5">
@@ -363,12 +365,12 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
             <div className="relative">
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+                className="flex items-center gap-2.5 p-1 pl-1.5 pr-2 rounded-xl hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 cursor-pointer"
               >
-                <img
-                  src={user?.avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80"}
-                  alt={user?.name || "Adopter"}
-                  className="w-8 h-8 rounded-full object-cover border border-[#14b8a6]/40"
+                <UserAvatar
+                  name={user?.name || 'Adopter'}
+                  avatarUrl={user?.avatarUrl}
+                  size="sm"
                 />
                 <div className="text-left hidden sm:block">
                   <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Adopter'}</p>

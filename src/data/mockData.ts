@@ -1,8 +1,9 @@
 import { AdoptionApplication, Pet, SavedCompanion, ShelterMessage, UserProfile } from '../types';
+import petifyLogo from '../assets/images/regenerated_image_1791344475697.png';
 
-export const KIN_PAWS_LOGO = '/petify-logo.svg';
+export const KIN_PAWS_LOGO = petifyLogo;
 
-export const PETIFY_LOGO = '/petify-logo.svg';
+export const PETIFY_LOGO = petifyLogo;
 
 export const DEFAULT_USER: UserProfile = {
   name: 'Sarah Jenkins',

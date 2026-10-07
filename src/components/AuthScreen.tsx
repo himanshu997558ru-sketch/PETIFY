@@ -10,14 +10,16 @@ import {
   MapPin,
   CheckCircle2,
   ShieldCheck,
-  ArrowRight,
   AlertCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import { RoleType } from '../types';
 import { useAuth } from '../context/AuthContext';
+import authBrandLogo from '../assets/images/regenerated_image_1791344475697.png';
 
 interface AuthScreenProps {
   initialMode?: 'login' | 'register';
+  onBackToLanding?: () => void;
   onLoginSuccess: (
     role: 'adopter' | 'shelter' | 'admin',
     customName?: string,
@@ -32,6 +34,7 @@ interface AuthScreenProps {
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
   initialMode = 'login',
+  onBackToLanding,
   onLoginSuccess,
   onRegisterSuccess,
 }) => {
@@ -129,7 +132,21 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
       <div className="absolute top-[-80px] left-[-80px] w-96 h-96 rounded-full bg-[#f9e0d9]/40 blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-[-100px] right-[-100px] w-[28rem] h-[28rem] rounded-full bg-[#b9eed1]/25 blur-3xl pointer-events-none"></div>
 
-      <div className="w-full max-w-md relative z-10 space-y-6">
+      <div className="w-full max-w-md relative z-10 space-y-4">
+        {onBackToLanding && (
+          <div>
+            <button
+              type="button"
+              onClick={onBackToLanding}
+              id="btn-back-to-landing"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#56423c] hover:text-[#00433b] bg-white/85 hover:bg-white border border-[#e8e2da] px-3.5 py-1.5 rounded-full transition-all cursor-pointer shadow-2xs"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Home</span>
+            </button>
+          </div>
+        )}
+
         {/* Main Card Container */}
         <div className="bg-white rounded-3xl shadow-xl shadow-[#9c3e1f]/5 border border-[#e8e2da] p-8 sm:p-10 backdrop-blur-xs transition-all duration-300">
           
@@ -137,7 +154,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <div className="text-center space-y-3">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-slate-200/80 shadow-md p-2 mx-auto">
               <img
-                src="/petify-logo.svg"
+                src={authBrandLogo}
                 alt="Petify Official Logo"
                 className="w-full h-full object-contain"
               />
@@ -153,11 +170,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <h3 className="text-xl font-bold text-[#1d1b17]">
                 {authMode === 'login' ? 'Welcome Back' : 'Create Your Account'}
               </h3>
-              <p className="text-xs text-[#56423c] mt-1 max-w-xs mx-auto leading-relaxed">
-                {authMode === 'login'
-                  ? 'Sign in to manage your pet applications, saved favorites, or shelter listings.'
-                  : 'Join our verified sanctuary network to adopt, foster, or list companions needing caring homes.'}
-              </p>
             </div>
           </div>
 
@@ -175,7 +187,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               {/* Email Address */}
               <div>
                 <label className="block text-xs font-semibold text-[#1d1b17] mb-1.5" htmlFor="login-email">
-                  Email Address or Admin Username
+                  Email Address
                 </label>
                 <div className="relative">
                   <input
@@ -188,9 +200,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="user@example.com"
-                    className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
+                    className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-4 h-[46px] outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                   />
-                  <Mail className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3.5" />
+                  <Mail className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
@@ -222,13 +234,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                       if (errorMessage) setErrorMessage('');
                     }}
                     placeholder="Enter your password"
-                    className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-11 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
+                    className="w-full bg-[#f9f3eb] text-[#1d1b17] text-sm rounded-xl pl-10 pr-11 h-[46px] outline-none focus:bg-white focus:ring-2 focus:ring-[#9c3e1f] border border-transparent focus:border-[#9c3e1f] transition-all placeholder-[#8a726b]"
                   />
-                  <Lock className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-3.5" />
+                  <Lock className="w-4 h-4 text-[#8a726b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-3.5 text-[#8a726b] hover:text-[#1d1b17] transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8a726b] hover:text-[#1d1b17] transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -255,10 +267,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <button
                 type="submit"
                 id="btn-login-submit"
-                className="w-full bg-[#9c3e1f] hover:bg-[#823217] active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md shadow-[#9c3e1f]/20 flex items-center justify-center gap-2 text-sm"
+                className="w-full bg-[#9c3e1f] hover:bg-[#823217] active:scale-[0.99] text-white font-semibold h-[46px] px-4 rounded-xl transition-all shadow-md shadow-[#9c3e1f]/20 flex items-center justify-center text-sm cursor-pointer"
               >
                 <span>Login</span>
-                <ArrowRight className="w-4 h-4" />
               </button>
 
               {/* Divider */}
@@ -275,8 +286,10 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <button
                 type="button"
                 id="btn-google-login"
-                onClick={() => onLoginSuccess('adopter')}
-                className="w-full bg-[#f9f3eb] hover:bg-[#eee7e0] active:scale-[0.99] text-[#1d1b17] font-semibold py-2.5 px-4 rounded-xl border border-[#ddc0b8]/40 transition-all flex items-center justify-center gap-2.5 text-xs sm:text-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+                className="w-full bg-[#f9f3eb] hover:bg-[#eee7e0] active:scale-[0.99] text-[#1d1b17] font-semibold h-[46px] px-4 rounded-xl border border-[#ddc0b8]/40 transition-all flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -526,14 +539,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <button
                 type="submit"
                 id="btn-register-submit"
-                className={`w-full text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm ${
+                className={`w-full text-white font-semibold h-[46px] px-4 rounded-xl transition-all shadow-md flex items-center justify-center text-sm cursor-pointer ${
                   registerRole === 'adopter'
                     ? 'bg-[#9c3e1f] hover:bg-[#823217] shadow-[#9c3e1f]/20'
                     : 'bg-[#376851] hover:bg-[#285943] shadow-[#376851]/20'
                 }`}
               >
                 <span>Create {registerRole === 'adopter' ? 'Adopter' : 'Shelter'} Account</span>
-                <ArrowRight className="w-4 h-4" />
               </button>
 
               {/* Switch to Login link */}
