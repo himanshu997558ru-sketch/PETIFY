@@ -359,107 +359,109 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] text-slate-900 font-sans relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fe] text-[#1e293b] font-sans antialiased selection:bg-blue-100 selection:text-blue-900 relative">
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs md:hidden"
         />
       )}
 
-      {/* ================= LEFT SIDEBAR (DEEP FOREST GREEN) ================= */}
+      {/* ================= LEFT SIDEBAR (CLEAN WHITE LIKE ADMIN DASHBOARD) ================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#043d2c] flex flex-col shrink-0 text-white select-none border-r border-[#022c22] transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:w-64 md:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col justify-between shrink-0 text-[#1e293b] select-none border-r border-slate-200/80 transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:w-64 md:z-auto ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="p-5 sm:p-6 pb-5 flex items-center justify-between border-b border-emerald-950/60">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-emerald-900/40">
-              <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {/* Brand Header */}
+          <div className="p-6 pb-5 flex items-center justify-between border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-slate-200">
+                <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-[#0f172a] leading-none">
+                  Petify
+                </h1>
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mt-1">Shelter Operations</span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
-                Petify
-              </h1>
-              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Shelter Operations</span>
-            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden p-2 text-emerald-300 hover:text-white rounded-lg hover:bg-emerald-900/50"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Navigation Items */}
+          <nav className="p-4 space-y-1.5 flex-1">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: PawPrint },
+              { id: 'add-pet', label: 'Add Pet', icon: Plus },
+              { id: 'my-pets', label: 'My Pets', icon: PawPrint },
+              { id: 'applications', label: 'Manage Applications', icon: FileText, badge: '4' },
+              { id: 'appointments', label: 'Appointment Requests', icon: Calendar, badge: String(appointments.filter(a => a.status !== 'Confirmed').length) },
+              { id: 'messages', label: 'Adopter Communication', icon: MessageSquare, badge: '3' },
+              { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+              { id: 'history', label: 'Adoption History & Certs', icon: Clock },
+              { id: 'profile', label: 'Profile', icon: User },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (item.id === 'add-pet') {
+                      setIsAddPetModalOpen(true);
+                    } else {
+                      setActiveNav(item.id);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-[#e0edff] text-[#2563eb] shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: PawPrint },
-            { id: 'add-pet', label: 'Add Pet', icon: Plus },
-            { id: 'my-pets', label: 'My Pets', icon: PawPrint },
-            { id: 'applications', label: 'Manage Applications', icon: FileText, badge: '4' },
-            { id: 'appointments', label: 'Appointment Requests', icon: Calendar, badge: String(appointments.filter(a => a.status !== 'Confirmed').length) },
-            { id: 'messages', label: 'Adopter Communication', icon: MessageSquare, badge: '3' },
-            { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-            { id: 'history', label: 'Adoption History & Certs', icon: Clock },
-            { id: 'profile', label: 'Profile', icon: User },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeNav === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (item.id === 'add-pet') {
-                    setIsAddPetModalOpen(true);
-                  } else {
-                    setActiveNav(item.id);
-                  }
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-[#10b981] text-white shadow-sm'
-                    : 'text-emerald-100/70 hover:bg-emerald-900/40 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-emerald-300/80'}`} />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                      isActive ? 'bg-emerald-900 text-white' : 'bg-emerald-800 text-emerald-200'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-emerald-950/60 space-y-1">
+        <div className="p-4 border-t border-slate-100 space-y-4">
           <button
             onClick={() => {
               setMobileMenuOpen(false);
               setActiveNav('settings');
             }}
-            className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeNav === 'settings'
-                ? 'bg-emerald-800 text-white'
-                : 'text-emerald-100/70 hover:bg-emerald-900/40 hover:text-white'
+                ? 'bg-[#e0edff] text-[#2563eb] shadow-xs'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
-            <Settings className="w-4 h-4 text-emerald-300/80" />
+            <Settings className="w-5 h-5 text-slate-400" />
             <span>Settings</span>
           </button>
           <button
@@ -467,16 +469,40 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               setMobileMenuOpen(false);
               onSignOut();
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-100/70 hover:bg-rose-950/40 hover:text-rose-200 transition-all"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#ef4444] hover:bg-red-50/70 transition-colors"
           >
-            <LogOut className="w-4 h-4 text-rose-300/70" />
+            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500" />
             <span>Logout</span>
           </button>
+
+          {/* Cute Pet Illustration Box with "Better Homes Happier Tails ♡" */}
+          <div className="relative rounded-2xl bg-gradient-to-b from-blue-50/60 to-indigo-50/60 p-3 pt-4 border border-blue-100/60 text-center overflow-hidden">
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="relative flex items-center justify-center -space-x-4 mb-2">
+                <img
+                  src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=120&h=120&q=80"
+                  alt="Dog"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-xs"
+                />
+                <img
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=120&h=120&q=80"
+                  alt="Cat"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs translate-y-1"
+                />
+              </div>
+              <p className="text-[12px] font-bold text-slate-800 tracking-tight leading-tight">
+                Better Homes
+              </p>
+              <p className="text-[11px] font-medium text-slate-500 flex items-center gap-1 justify-center">
+                Happier Tails <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+              </p>
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f8fafc] min-w-0">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f4f7fe] min-w-0">
         {/* Top Header Bar */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between shrink-0 z-10 shadow-2xs gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -502,9 +528,9 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
 
           <div className="flex items-center gap-3">
             {/* Mission Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 rounded-full text-xs font-semibold">
-              <PawPrint className="w-3.5 h-3.5 text-emerald-600 fill-current" />
-              <span>Together we save lives 💚</span>
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
+              <PawPrint className="w-3.5 h-3.5 text-blue-600 fill-current" />
+              <span>Together we save lives 🐾</span>
             </div>
 
 
@@ -524,7 +550,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 text-xs">
                   <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between font-bold text-slate-800">
                     <span>Shelter Alerts</span>
-                    <span className="text-[10px] text-emerald-600 font-semibold">Mark read</span>
+                    <span className="text-[10px] text-blue-600 font-semibold cursor-pointer">Mark read</span>
                   </div>
                   <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
                     <div className="p-3 hover:bg-slate-50 cursor-pointer">
@@ -540,11 +566,11 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         setIsNotificationsOpen(false);
                         openAdopterChat('Anjali Singh');
                       }}
-                      className="p-3 hover:bg-emerald-50/60 cursor-pointer transition-colors"
+                      className="p-3 hover:bg-blue-50/60 cursor-pointer transition-colors"
                     >
                       <p className="font-semibold text-slate-800 flex items-center justify-between">
                         <span>Adopter message received</span>
-                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">Chat</span>
+                        <span className="text-[9px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Chat</span>
                       </p>
                       <p className="text-slate-500 text-[11px] mt-0.5">Anjali Singh sent a meet & greet inquiry</p>
                     </div>
@@ -576,7 +602,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="font-bold text-slate-900">{user?.name || 'Happy Paws Shelter'}</p>
                     <p className="text-slate-500 text-[11px]">{user?.email || 'coordinator@happypaws.org'}</p>
-                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                       {user?.status || 'Verified Shelter'}
                     </span>
                   </div>
@@ -677,7 +703,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         <div
                           key={pet.id}
                           onClick={() => setInspectPet(pet)}
-                          className="group bg-slate-50 hover:bg-white rounded-xl p-2.5 border border-slate-200/70 hover:border-emerald-300 hover:shadow-xs transition-all cursor-pointer flex flex-col"
+                          className="group bg-slate-50 hover:bg-white rounded-xl p-2.5 border border-slate-200/70 hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer flex flex-col"
                         >
                           <div className="w-full h-28 rounded-lg overflow-hidden relative bg-slate-200">
                             <img
@@ -691,7 +717,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                             <p className="text-[11px] text-slate-500">
                               {pet.type} • {pet.age}
                             </p>
-                            <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/70 text-emerald-800 border border-emerald-200/60">
+                            <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
                               {pet.status}
                             </span>
                           </div>
@@ -704,7 +730,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     <span className="text-[11px] text-slate-400">Showing 3 of 32 registered pets</span>
                     <button
                       onClick={() => setIsAddPetModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add New Pet</span>
@@ -871,7 +897,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                                 <>
                                   <button
                                     onClick={() => handleUpdateAppStatus(app.id, 'Approved')}
-                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-semibold transition-colors"
+                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold transition-colors"
                                   >
                                     Approve
                                   </button>
@@ -883,7 +909,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                                   </button>
                                   <button
                                     onClick={() => openAdopterChat(app.applicant)}
-                                    className="p-1 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors border border-slate-200"
+                                    className="p-1 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors border border-slate-200"
                                     title="Message Adopter"
                                   >
                                     <MessageSquare className="w-3.5 h-3.5" />
@@ -892,7 +918,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                               ) : (
                                 <button
                                   onClick={() => openAdopterChat(app.applicant)}
-                                  className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors"
+                                  className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors"
                                 >
                                   <MessageSquare className="w-3 h-3" />
                                   <span>Message</span>
@@ -908,17 +934,17 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               </div>
 
               {/* ================= BOTTOM IMPACT BANNER ================= */}
-              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100/60 rounded-2xl p-6 border border-emerald-200/80 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xs">
+              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-100/60 rounded-2xl p-6 border border-blue-200/80 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xs">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
-                    <PawPrint className="w-8 h-8 text-emerald-600 fill-current" />
+                  <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center shrink-0">
+                    <PawPrint className="w-8 h-8 text-blue-600 fill-current" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900">
                       Every pet deserves a loving home
                     </h3>
                     <p className="text-xs text-slate-600 mt-0.5">
-                      Thank you for making a difference! 💚
+                      Thank you for making a difference! 🐾
                     </p>
                   </div>
                 </div>
@@ -941,7 +967,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                   >
                     ← Back to Dashboard
                   </button>
@@ -952,7 +978,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 </div>
                 <button
                   onClick={() => setIsAddPetModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs self-start sm:self-auto"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs self-start sm:self-auto"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add New Pet</span>
@@ -970,7 +996,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
                         <span className={`absolute top-3 right-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-xs shadow-2xs ${
                           pet.verificationStatus === 'Verified'
-                            ? 'bg-emerald-500/90 text-white'
+                            ? 'bg-blue-600/90 text-white'
                             : 'bg-amber-500/90 text-white'
                         }`}>
                           {pet.verificationStatus}
@@ -995,7 +1021,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                         <button
                           onClick={() => setInspectPet(pet)}
-                          className="text-xs font-semibold text-emerald-600 hover:underline flex items-center gap-1"
+                          className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5" />
                           <span>Health Records</span>
@@ -1006,13 +1032,13 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                               setShelterPets(prev => prev.map(p => p.id === pet.id ? { ...p, verificationStatus: 'Verified' } : p));
                               triggerToast(`${pet.name} submitted for veterinarian verification!`);
                             }}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-xs font-semibold text-white shadow-2xs"
+                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs font-semibold text-white shadow-2xs"
                           >
                             Verify Pet
                           </button>
                         ) : (
-                          <span className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-[11px] font-semibold text-blue-700 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
                             <span>Verified</span>
                           </span>
                         )}
@@ -1031,7 +1057,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                   >
                     ← Back to Dashboard
                   </button>
@@ -1044,7 +1070,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 {shelterApps.map((app) => (
                   <div
                     key={app.id}
-                    className="p-4 rounded-xl border border-slate-100 hover:border-emerald-200 flex flex-col gap-4"
+                    className="p-4 rounded-xl border border-slate-100 hover:border-blue-200 flex flex-col gap-4"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -1076,7 +1102,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         {app.status === 'Pending' ? (
                           <button
                             onClick={() => handleUpdateAppStatus(app.id, 'Approved')}
-                            className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
+                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
                           >
                             Approve Application
                           </button>
@@ -1104,7 +1130,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         )}
                         <button
                           onClick={() => openAdopterChat(app.applicant)}
-                          className="px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                          className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
                           title="Open Adopter Communication"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -1125,7 +1151,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                               triggerToast(`Advanced ${app.applicant}'s application to Stage ${next}`);
                             }}
                             disabled={(app.step || 1) >= 4}
-                            className="text-[10px] font-semibold px-2 py-0.5 bg-white border border-slate-200 text-emerald-700 rounded hover:bg-emerald-50 disabled:opacity-40"
+                            className="text-[10px] font-semibold px-2 py-0.5 bg-white border border-slate-200 text-blue-700 rounded hover:bg-blue-50 disabled:opacity-40"
                           >
                             Advance Stage →
                           </button>
@@ -1144,9 +1170,9 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                           return (
                             <div key={st.num} className={`p-1.5 rounded-lg border ${
                               isCurrent
-                                ? 'bg-emerald-100/70 border-emerald-300 text-emerald-900 font-bold'
+                                ? 'bg-blue-100/80 border-blue-300 text-blue-900 font-bold'
                                 : isDone
-                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
                                 : 'bg-white border-slate-200 text-slate-400'
                             }`}>
                               <div>Step {st.num}</div>
@@ -1169,7 +1195,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                   >
                     ← Back to Dashboard
                   </button>
@@ -1194,7 +1220,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1206,17 +1232,17 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs">
                   <p className="text-xs text-slate-500">Adoption Success Rate</p>
                   <h3 className="text-2xl font-bold text-slate-900 mt-1">92.4%</h3>
-                  <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ 4.2% this quarter</p>
+                  <p className="text-[11px] text-blue-600 font-semibold mt-1">↑ 4.2% this quarter</p>
                 </div>
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs">
                   <p className="text-xs text-slate-500">Average Stay Duration</p>
                   <h3 className="text-2xl font-bold text-slate-900 mt-1">11.2 Days</h3>
-                  <p className="text-[11px] text-emerald-600 font-semibold mt-1">↓ 3.1 days faster turnaround</p>
+                  <p className="text-[11px] text-blue-600 font-semibold mt-1">↓ 3.1 days faster turnaround</p>
                 </div>
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs">
                   <p className="text-xs text-slate-500">Adopter Satisfaction</p>
                   <h3 className="text-2xl font-bold text-slate-900 mt-1">4.9 / 5.0</h3>
-                  <p className="text-[11px] text-emerald-600 font-semibold mt-1">From 48 verified reviews</p>
+                  <p className="text-[11px] text-blue-600 font-semibold mt-1">From 48 verified reviews</p>
                 </div>
               </div>
             </div>
@@ -1228,7 +1254,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1269,10 +1295,10 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     rabies: 'RB-2025-012',
                   },
                 ].map((item, idx) => (
-                  <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-emerald-300 transition-all space-y-3 flex flex-col justify-between">
+                  <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-blue-300 transition-all space-y-3 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                           {item.certId}
                         </span>
                         <span className="text-[10px] text-slate-400">{item.date}</span>
@@ -1300,7 +1326,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                           legalNote: 'Official permanent adoption certificate issued under Animal Welfare Board standards.',
                         });
                       }}
-                      className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition-colors"
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition-colors"
                     >
                       <Award className="w-3.5 h-3.5" />
                       <span>View Official Certificate</span>
@@ -1318,14 +1344,14 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 <div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                   >
                     ← Back to Dashboard
                   </button>
                   <h2 className="text-xl font-bold text-slate-900">Meet &amp; Greet Appointment Requests</h2>
                   <p className="text-xs text-slate-500">Scheduled in-person visits and video screening calls requested by approved adopters.</p>
                 </div>
-                <span className="text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
+                <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">
                   {appointments.length} Total Bookings
                 </span>
               </div>
@@ -1334,11 +1360,11 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 {appointments.map((apt) => (
                   <div
                     key={apt.id}
-                    className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-emerald-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs hover:border-blue-200 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                           {apt.type}
                         </span>
                         <span className="text-xs font-bold text-slate-900">• Pet: {apt.petName}</span>
@@ -1354,8 +1380,8 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
 
                     <div className="flex items-center gap-2 shrink-0">
                       {apt.status === 'Confirmed' ? (
-                        <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold rounded-xl flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
                           <span>Confirmed</span>
                         </span>
                       ) : (
@@ -1364,16 +1390,16 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                             setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, status: 'Confirmed' } : a));
                             triggerToast(`Appointment for ${apt.adopter} confirmed!`);
                           }}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
                         >
                           Confirm Booking
                         </button>
                       )}
                       <button
                         onClick={() => openAdopterChat(apt.adopter)}
-                        className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
+                        className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
                       >
-                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                        <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
                         <span>Message Adopter</span>
                       </button>
                     </div>
@@ -1390,7 +1416,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1412,7 +1438,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         setNewPetType('Dog');
                         setIsAddPetModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-2xs self-start sm:self-auto"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-2xs self-start sm:self-auto"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Post New Dog Listing</span>
@@ -1425,7 +1451,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
                 <button
                   onClick={() => setActiveNav('dog-breeds')}
-                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
                 >
                   <PawPrint className="w-4 h-4" />
                   <span>Dog Breeds (10)</span>
@@ -1457,7 +1483,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1479,7 +1505,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                         setNewPetType('Cat');
                         setIsAddPetModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-2xs self-start sm:self-auto"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-2xs self-start sm:self-auto"
                     >
                       <Plus className="w-4 h-4" />
                       <span>Post New Cat Listing</span>
@@ -1499,7 +1525,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 </button>
                 <button
                   onClick={() => setActiveNav('cat-breeds')}
-                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Cat Breeds (10)</span>
@@ -1524,7 +1550,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-emerald-700 hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1538,7 +1564,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <input
                     type="text"
                     defaultValue={user?.name || "Happy Paws Shelter"}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1546,7 +1572,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <input
                     type="email"
                     defaultValue={user?.email || "coordinator@happypaws.org"}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1554,7 +1580,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <input
                     type="text"
                     defaultValue={user?.location || "428 Orchard Ridge Trail, Austin, TX"}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1562,12 +1588,12 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <input
                     type="text"
                     defaultValue="+1 (512) 555-0199"
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <button
                   onClick={() => triggerToast('Shelter settings updated!')}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
                 >
                   Save Changes
                 </button>
@@ -1583,7 +1609,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <PawPrint className="w-4 h-4 text-emerald-600" />
+                <PawPrint className="w-4 h-4 text-blue-600" />
                 <span>Post New Companion Animal</span>
               </h3>
               <button
@@ -1603,7 +1629,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   placeholder="e.g. Copper, Bella, Oliver"
                   value={newPetName}
                   onChange={(e) => setNewPetName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                 />
               </div>
 
@@ -1613,7 +1639,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   <select
                     value={newPetType}
                     onChange={(e) => setNewPetType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   >
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
@@ -1627,7 +1653,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     placeholder="e.g. 2 years, 6 months"
                     value={newPetAge}
                     onChange={(e) => setNewPetAge(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
               </div>
@@ -1639,7 +1665,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     <span className="text-[10px] text-amber-700 font-semibold">10 Standard Dog Breeds</span>
                   )}
                   {newPetType === 'Cat' && (
-                    <span className="text-[10px] text-emerald-700 font-semibold">10 Standard Cat Breeds</span>
+                    <span className="text-[10px] text-blue-700 font-semibold">10 Standard Cat Breeds</span>
                   )}
                 </div>
                 {newPetType === 'Dog' ? (
@@ -1647,7 +1673,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     <select
                       value={newPetBreed}
                       onChange={(e) => setNewPetBreed(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600 bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600 bg-white"
                     >
                       <option value="">Select a Dog Breed...</option>
                       {DOG_BREEDS_DIRECTORY.map((d) => (
@@ -1680,7 +1706,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     <select
                       value={newPetBreed}
                       onChange={(e) => setNewPetBreed(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600 bg-white"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600 bg-white"
                     >
                       <option value="">Select a Cat Breed...</option>
                       {CAT_BREEDS_DIRECTORY.map((c) => (
@@ -1699,7 +1725,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                           onClick={() => setNewPetBreed(c.breed)}
                           className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
                             newPetBreed === c.breed
-                              ? 'bg-emerald-600 text-white border-emerald-600 font-bold'
+                              ? 'bg-blue-600 text-white border-blue-600 font-bold'
                               : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                           }`}
                         >
@@ -1714,7 +1740,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                     placeholder="e.g. Mixed Breed, Companion Animal"
                     value={newPetBreed}
                     onChange={(e) => setNewPetBreed(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 )}
               </div>
@@ -1726,7 +1752,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   placeholder="Personality traits, medical history, compatibility..."
                   value={newPetDesc}
                   onChange={(e) => setNewPetDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-emerald-600"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                 />
               </div>
 
@@ -1740,7 +1766,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-2xs"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-2xs"
                 >
                   Publish Listing
                 </button>
@@ -1777,30 +1803,30 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Status:</span>
-                  <span className="font-bold text-emerald-700">{inspectPet.status}</span>
+                  <span className="font-bold text-blue-700">{inspectPet.status}</span>
                 </div>
               </div>
 
               {/* Veterinary Health Information (Feature 14) */}
-              <div className="mt-4 p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2 text-xs">
-                <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-[11px]">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <div className="mt-4 p-3.5 bg-blue-50 rounded-2xl border border-blue-200 space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-blue-900 text-[11px]">
+                  <ShieldCheck className="w-4 h-4 text-blue-600" />
                   <span>Pet Health &amp; Veterinary Records</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 bg-white rounded-xl border border-emerald-100">
+                  <div className="p-2 bg-white rounded-xl border border-blue-100">
                     <span className="text-slate-400 block text-[10px]">Microchip ID</span>
                     <span className="font-mono font-semibold text-slate-800">{inspectPet.microchipId || '985141002345891'}</span>
                   </div>
-                  <div className="p-2 bg-white rounded-xl border border-emerald-100">
+                  <div className="p-2 bg-white rounded-xl border border-blue-100">
                     <span className="text-slate-400 block text-[10px]">Rabies Clearance</span>
                     <span className="font-semibold text-slate-800">{inspectPet.rabiesBatch || 'RB-2025-881'}</span>
                   </div>
-                  <div className="p-2 bg-white rounded-xl border border-emerald-100">
+                  <div className="p-2 bg-white rounded-xl border border-blue-100">
                     <span className="text-slate-400 block text-[10px]">Spay / Neuter</span>
-                    <span className="font-semibold text-emerald-700">{inspectPet.spayedNeutered || 'Verified Completed'}</span>
+                    <span className="font-semibold text-blue-700">{inspectPet.spayedNeutered || 'Verified Completed'}</span>
                   </div>
-                  <div className="p-2 bg-white rounded-xl border border-emerald-100">
+                  <div className="p-2 bg-white rounded-xl border border-blue-100">
                     <span className="text-slate-400 block text-[10px]">Deworming</span>
                     <span className="font-semibold text-slate-800">Current &amp; Cleared</span>
                   </div>
@@ -1842,7 +1868,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                   setInspectPet(null);
                   triggerToast(`Veterinary records for ${inspectPet.name} updated.`);
                 }}
-                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
+                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-2xs"
               >
                 Save &amp; Close
               </button>
@@ -1863,7 +1889,7 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
       {/* ================= FLOATING TOAST ================= */}
       {toastMessage && (
         <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-800 animate-in slide-in-from-bottom-3 duration-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span className="w-2 h-2 rounded-full bg-blue-400"></span>
           <span>{toastMessage}</span>
         </div>
       )}

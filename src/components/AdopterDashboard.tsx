@@ -199,7 +199,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
   });
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#f0fdfa] text-slate-900 font-sans relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#f4f7fe] text-[#1e293b] font-sans antialiased selection:bg-blue-100 selection:text-blue-900 relative">
       {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div
@@ -208,104 +208,130 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
         />
       )}
 
-      {/* ================= LEFT SIDEBAR (LIGHT AQUAMARINE) ================= */}
+      {/* ================= LEFT SIDEBAR ================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#e2f8f4] flex flex-col shrink-0 text-[#0f4e4c] select-none border-r border-[#99f6e4]/80 transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:w-64 md:z-auto ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white flex flex-col justify-between shrink-0 text-[#1e293b] select-none border-r border-slate-200/80 transition-transform duration-200 ease-in-out md:translate-x-0 md:static md:w-64 md:z-auto ${
           mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
-        <div className="p-5 sm:p-6 pb-5 flex items-center justify-between border-b border-[#99f6e4]/70">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-[#99f6e4]">
-              <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {/* Brand Header */}
+          <div className="p-6 pb-5 flex items-center justify-between border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0 border border-slate-200">
+                <img src={PETIFY_LOGO} alt="Petify Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-[#0f172a] leading-none">
+                  Petify
+                </h1>
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block mt-1">Adopter Portal</span>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-[#042f2e] flex items-center gap-1.5">
-                Petify
-              </h1>
-              <span className="text-[10px] font-bold text-[#0d9488] uppercase tracking-wider block">Adopter Portal</span>
-            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              aria-label="Close menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-[#ccfbf1]"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Navigation Items */}
+          <nav className="p-4 space-y-1.5 flex-1">
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: PawPrint },
+              { id: 'search', label: 'Browse & Search Pets', icon: Search },
+              { id: 'favorites', label: 'Saved Favorites', icon: Heart, badge: String(favoritedNames.length) },
+              { id: 'applications', label: 'My Applications', icon: FileText, badge: String(adopterApps.length) },
+              { id: 'status', label: 'Application Tracking', icon: Clock },
+              { id: 'messages', label: 'Messages', icon: Mail, badge: '2' },
+              { id: 'history', label: 'Adoption History & Certs', icon: Award },
+              { id: 'profile', label: 'Profile', icon: User },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveNav(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isActive
+                      ? 'bg-[#e0edff] text-[#2563eb] shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.badge && (
+                    <span
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: PawPrint },
-            { id: 'search', label: 'Browse & Search Pets', icon: Search },
-            { id: 'favorites', label: 'Saved Favorites', icon: Heart, badge: String(favoritedNames.length) },
-            { id: 'applications', label: 'My Applications', icon: FileText, badge: String(adopterApps.length) },
-            { id: 'status', label: 'Application Tracking', icon: Clock },
-            { id: 'messages', label: 'Messages', icon: Mail, badge: '2' },
-            { id: 'history', label: 'Adoption History & Certs', icon: Award },
-            { id: 'profile', label: 'Profile', icon: User },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = activeNav === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveNav(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-[#0d9488] text-white shadow-sm'
-                    : 'text-[#115e59] hover:bg-[#ccfbf1] hover:text-[#042f2e]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#0d9488]'}`} />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                      isActive ? 'bg-[#0f766e] text-white' : 'bg-[#ccfbf1] text-[#0f766e]'
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-[#99f6e4]/70">
+        <div className="p-4 border-t border-slate-100 space-y-4">
           <button
             onClick={() => {
               setMobileMenuOpen(false);
               onSignOut();
             }}
-            className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#115e59] hover:bg-rose-50 hover:text-rose-700 transition-all"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-[#ef4444] hover:bg-red-50/70 transition-colors"
           >
-            <LogOut className="w-4 h-4 text-rose-500" />
+            <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500" />
             <span>Logout</span>
           </button>
+
+          {/* Cute Pet Illustration Box with "Better Homes Happier Tails ♡" */}
+          <div className="relative rounded-2xl bg-gradient-to-b from-blue-50/60 to-indigo-50/60 p-3 pt-4 border border-blue-100/60 text-center overflow-hidden">
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="relative flex items-center justify-center -space-x-4 mb-2">
+                <img
+                  src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=120&h=120&q=80"
+                  alt="Dog"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-xs"
+                />
+                <img
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=120&h=120&q=80"
+                  alt="Cat"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-xs translate-y-1"
+                />
+              </div>
+              <p className="text-[12px] font-bold text-slate-800 tracking-tight leading-tight">
+                Better Homes
+              </p>
+              <p className="text-[11px] font-medium text-slate-500 flex items-center gap-1 justify-center">
+                Happier Tails <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+              </p>
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* ================= MAIN CONTENT AREA ================= */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f0fdfa] min-w-0">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f4f7fe] min-w-0">
         {/* Top Header Bar */}
-        <header className="h-16 bg-white/95 backdrop-blur-xs border-b border-[#ccfbf1] px-4 sm:px-6 flex items-center justify-between shrink-0 z-10 shadow-2xs gap-3">
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between shrink-0 z-10 shadow-2xs gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {/* Mobile 3-Line Hamburger Menu Button */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-xl text-[#0f4e4c] hover:text-[#042f2e] bg-[#e0f9f5] hover:bg-[#ccfbf1] border border-[#99f6e4] transition-colors shrink-0 flex items-center justify-center shadow-2xs"
+              className="md:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors shrink-0 flex items-center justify-center shadow-2xs"
               aria-label="Open 3-line navigation menu"
             >
               <Menu className="w-6 h-6" />
@@ -323,8 +349,8 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
 
           <div className="flex items-center gap-3">
             {/* Mission Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-[#e0f9f5] border border-[#99f6e4] text-[#0f766e] rounded-full text-xs font-semibold">
-              <Heart className="w-3.5 h-3.5 text-[#0d9488] fill-current" />
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
+              <Heart className="w-3.5 h-3.5 text-blue-600 fill-current" />
               <span>Adopt a pet... Change a life 🐾</span>
             </div>
 
@@ -345,7 +371,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 text-xs">
                   <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between font-bold text-slate-800">
                     <span>Adoption Updates</span>
-                    <span className="text-[10px] text-[#0d9488] font-semibold">Mark read</span>
+                    <span className="text-[10px] text-blue-600 font-semibold cursor-pointer">Mark read</span>
                   </div>
                   <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
                     <div className="p-3 hover:bg-slate-50 cursor-pointer">
@@ -384,7 +410,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <div className="px-4 py-2 border-b border-slate-100">
                     <p className="font-bold text-slate-900">{user?.name || 'Adopter'}</p>
                     <p className="text-slate-500 text-[11px] font-mono">{user?.email || 'adopter@petify.org'}</p>
-                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e0f9f5] text-[#0f766e] border border-[#99f6e4]">
+                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                       {user?.status || 'Verified Adopter'}
                     </span>
                   </div>
@@ -407,15 +433,15 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
         </header>
 
         {/* Scrollable Dashboard Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 bg-[#f0fdfa]">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 bg-[#f4f7fe]">
           {activeNav === 'dashboard' && (
             <>
               {/* ================= 4 STAT CARDS ================= */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Available Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0d9488] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center">
                       <PawPrint className="w-5 h-5 fill-current" />
                     </div>
                     <span className="text-xs font-semibold text-slate-500">Available Pets</span>
@@ -426,9 +452,9 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
 
                 {/* My Applications */}
-                <div className="bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#0d9488] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                       <Heart className="w-5 h-5 fill-current" />
                     </div>
                     <span className="text-xs font-semibold text-slate-500">My Applications</span>
@@ -439,7 +465,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
 
                 {/* Adopted Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                       <FileText className="w-5 h-5" />
@@ -452,7 +478,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
 
                 {/* Favorites */}
-                <div className="bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
                       <Star className="w-5 h-5 fill-current" />
@@ -466,8 +492,8 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               </div>
 
               {/* ================= FIND YOUR NEW FRIEND (SEARCH & FILTERS) ================= */}
-              <div className="bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs space-y-4">
-                <div className="pb-2 border-b border-[#ccfbf1]/60">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs space-y-4">
+                <div className="pb-2 border-b border-slate-100">
                   <h3 className="text-sm font-bold text-slate-900">Find &amp; Browse Companions</h3>
                   <p className="text-xs text-slate-500">Filter available pets by name, animal type, breed, or location.</p>
                 </div>
@@ -481,12 +507,12 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       placeholder="Search by name, breed, or location..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50/70 hover:bg-slate-50 focus:bg-white rounded-xl border border-slate-200 focus:outline-[#0d9488] transition-all placeholder:text-slate-400"
+                      className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50/70 hover:bg-slate-50 focus:bg-white rounded-xl border border-slate-200 focus:outline-blue-500 transition-all placeholder:text-slate-400"
                     />
                   </div>
                   <button
                     onClick={() => triggerToast(`Filtering companion matches for "${searchQuery || 'all'}"`)}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
+                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0"
                   >
                     Search
                   </button>
@@ -499,7 +525,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     <select
                       value={selectedAnimal}
                       onChange={(e) => setSelectedAnimal(e.target.value)}
-                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-[#0d9488] cursor-pointer pr-8"
+                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-blue-500 cursor-pointer pr-8"
                     >
                       <option value="All Animals">All Animals</option>
                       <option value="Dogs">Dogs</option>
@@ -514,7 +540,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     <select
                       value={selectedBreed}
                       onChange={(e) => setSelectedBreed(e.target.value)}
-                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-[#0d9488] cursor-pointer pr-8"
+                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-blue-500 cursor-pointer pr-8"
                     >
                       <option value="All Breeds">All Breeds</option>
                       <optgroup label="10 Standard Dog Breeds">
@@ -543,7 +569,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     <select
                       value={selectedLocation}
                       onChange={(e) => setSelectedLocation(e.target.value)}
-                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-[#0d9488] cursor-pointer pr-8"
+                      className="w-full appearance-none px-3.5 py-2 text-xs bg-white rounded-xl border border-slate-200 text-slate-700 font-medium focus:outline-blue-500 cursor-pointer pr-8"
                     >
                       <option value="All Locations">All Locations</option>
                       <option value="Austin, TX">Austin, TX</option>
@@ -561,7 +587,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <h3 className="text-sm font-bold text-slate-900">Featured Pets</h3>
                   <button
                     onClick={() => setActiveNav('search')}
-                    className="text-xs font-bold text-[#0f766e] hover:text-[#115e59] hover:underline"
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
                   >
                     View All
                   </button>
@@ -573,7 +599,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     return (
                       <div
                         key={pet.id}
-                        className="bg-white rounded-2xl p-3 border border-[#ccfbf1] shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between group"
+                        className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between group"
                       >
                         {/* Pet Photo */}
                         <div className="w-full h-36 rounded-xl overflow-hidden relative bg-slate-100">
@@ -582,7 +608,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                             alt={pet.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                          <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/95 text-[#0f766e] backdrop-blur-xs border border-[#99f6e4] shadow-2xs">
+                          <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/95 text-blue-700 backdrop-blur-xs border border-blue-200 shadow-2xs">
                             {pet.verificationStatus || 'Verified'}
                           </span>
                           <button
@@ -619,7 +645,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         <div className="mt-3.5">
                           <button
                             onClick={() => setActivePetDetail(pet)}
-                            className="w-full py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl transition-colors shadow-2xs"
+                            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs"
                           >
                             View Details
                           </button>
@@ -633,13 +659,13 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               {/* ================= BOTTOM SPLIT: APPLICATIONS & ADOPTION JOURNEY ================= */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* My Recent Applications (approx 60-65% width) */}
-                <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-[#ccfbf1] shadow-2xs flex flex-col justify-between">
+                <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <h3 className="text-sm font-bold text-slate-900">My Recent Applications</h3>
                       <button
                         onClick={() => setActiveNav('applications')}
-                        className="text-xs font-bold text-[#0f766e] hover:text-[#115e59] hover:underline"
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
                       >
                         View All
                       </button>
@@ -687,7 +713,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     <span className="text-slate-400 text-[11px]">All shelter screening interviews verified</span>
                     <button
                       onClick={() => setActiveNav('status')}
-                      className="text-[#0f766e] font-semibold hover:underline"
+                      className="text-blue-600 font-semibold hover:underline"
                     >
                       Track Application Journey →
                     </button>
@@ -695,9 +721,9 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
 
                 {/* Adoption Journey Card (approx 35-40% width) */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-[#ccfbf1]/60 via-[#e0f9f5] to-[#f0fdfa] rounded-2xl p-5 border border-[#99f6e4] shadow-2xs flex flex-col justify-between relative overflow-hidden">
+                <div className="lg:col-span-5 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-white rounded-2xl p-5 border border-blue-100 shadow-2xs flex flex-col justify-between relative overflow-hidden">
                   <div className="relative z-10">
-                    <div className="flex items-center gap-2 text-[#0d9488]">
+                    <div className="flex items-center gap-2 text-blue-600">
                       <Heart className="w-4 h-4 fill-current" />
                       <h3 className="text-sm font-bold text-slate-900">Adoption Journey</h3>
                     </div>
@@ -715,15 +741,15 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         className="w-36 h-24 rounded-2xl object-cover border-2 border-white shadow-md rotate-1"
                       />
                       {/* Floating hearts */}
-                      <span className="absolute -top-1 -right-1 text-teal-500 text-sm animate-bounce">🌊</span>
-                      <span className="absolute bottom-2 -left-2 text-teal-400 text-xs">✨</span>
+                      <span className="absolute -top-1 -right-1 text-blue-500 text-sm animate-bounce">🌊</span>
+                      <span className="absolute bottom-2 -left-2 text-indigo-400 text-xs">✨</span>
                     </div>
                   </div>
 
                   <div className="relative z-10 pt-2 text-center">
                     <button
                       onClick={() => triggerToast('Opened step-by-step adoption guide!')}
-                      className="w-full py-2 bg-white/90 hover:bg-white text-slate-800 text-xs font-bold rounded-xl border border-[#99f6e4] shadow-2xs transition-all"
+                      className="w-full py-2 bg-white/90 hover:bg-white text-slate-800 text-xs font-bold rounded-xl border border-blue-200 shadow-2xs transition-all"
                     >
                       View Adopter Guide
                     </button>
@@ -732,17 +758,17 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               </div>
 
               {/* ================= BOTTOM BANNER ================= */}
-              <div className="bg-gradient-to-r from-[#ccfbf1] via-[#e0f9f5] to-[#f0fdfa] rounded-2xl p-6 border border-[#99f6e4] flex items-center justify-between shadow-2xs">
+              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-100/60 rounded-2xl p-6 border border-blue-200/80 flex items-center justify-between shadow-2xs">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 rounded-2xl bg-[#0d9488]/15 border border-[#14b8a6]/30 flex items-center justify-center shrink-0">
-                    <PawPrint className="w-8 h-8 text-[#0d9488] fill-current" />
+                  <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center shrink-0">
+                    <PawPrint className="w-8 h-8 text-blue-600 fill-current" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#042f2e]">
+                    <h3 className="text-lg font-bold text-slate-900">
                       Adopt • Love • Give Them a Second Chance
                     </h3>
-                    <p className="text-xs text-[#0f766e] mt-0.5 font-medium">
-                      A happier world for every paw 🌊
+                    <p className="text-xs text-blue-600 mt-0.5 font-medium">
+                      A happier world for every paw 🐾
                     </p>
                   </div>
                 </div>
@@ -756,7 +782,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -766,13 +792,13 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     <p className="text-xs text-slate-500">128 companion animals and standard breed care guides available.</p>
                   </div>
                   {/* Mode Switcher Tabs */}
-                  <div className="flex items-center gap-1.5 bg-[#e0f9f5] p-1 rounded-xl border border-[#99f6e4]/60">
+                  <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200/80">
                     <button
                       onClick={() => setBrowseSubTab('pets')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                         browseSubTab === 'pets'
-                          ? 'bg-[#0d9488] text-white shadow-xs'
-                          : 'text-[#115e59] hover:text-[#042f2e]'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <PawPrint className="w-3.5 h-3.5" />
@@ -782,8 +808,8 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       onClick={() => setBrowseSubTab('dog-breeds')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                         browseSubTab === 'dog-breeds'
-                          ? 'bg-[#0d9488] text-white shadow-xs'
-                          : 'text-[#115e59] hover:text-[#042f2e]'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
                       <PawPrint className="w-3.5 h-3.5 text-amber-500" />
@@ -793,11 +819,11 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       onClick={() => setBrowseSubTab('cat-breeds')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                         browseSubTab === 'cat-breeds'
-                          ? 'bg-[#0d9488] text-white shadow-xs'
-                          : 'text-[#115e59] hover:text-[#042f2e]'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-teal-300" />
+                      <Sparkles className="w-3.5 h-3.5 text-blue-300" />
                       <span>Cat Breeds &amp; Care</span>
                     </button>
                   </div>
@@ -809,7 +835,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   {[...featuredPetsData, ...pets].slice(0, 12).map((pet, idx) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-2xl border border-[#ccfbf1] overflow-hidden shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between"
+                      className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between"
                     >
                       <div className="h-40 bg-slate-100 relative">
                         <img
@@ -825,7 +851,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         </div>
                         <button
                           onClick={() => setActivePetDetail(pet)}
-                          className="mt-4 w-full py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+                          className="mt-4 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
                         >
                           View Details
                         </button>
@@ -867,7 +893,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -879,20 +905,20 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setActiveNav('cat-breeds')}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#e0f9f5] hover:bg-[#ccfbf1] text-[#0f766e] border border-[#99f6e4] rounded-xl text-xs font-semibold transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold transition-colors"
                     >
                       <span>Switch to Cat Breeds</span>
-                      <Sparkles className="w-3.5 h-3.5 text-[#0d9488]" />
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Quick Tab Switcher */}
-              <div className="flex items-center gap-2 border-b border-[#ccfbf1] pb-2">
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
                 <button
                   onClick={() => setActiveNav('dog-breeds')}
-                  className="px-4 py-2 bg-[#0d9488] text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
                 >
                   <PawPrint className="w-4 h-4" />
                   <span>Dog Breeds (10)</span>
@@ -901,7 +927,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   onClick={() => setActiveNav('cat-breeds')}
                   className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl border border-slate-200 transition-colors flex items-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4 text-[#0d9488]" />
+                  <Sparkles className="w-4 h-4 text-blue-600" />
                   <span>Cat Breeds (10)</span>
                 </button>
               </div>
@@ -924,7 +950,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -936,7 +962,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setActiveNav('dog-breeds')}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#e0f9f5] hover:bg-[#ccfbf1] text-[#0f766e] border border-[#99f6e4] rounded-xl text-xs font-semibold transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold transition-colors"
                     >
                       <span>Switch to Dog Breeds</span>
                       <PawPrint className="w-3.5 h-3.5 text-amber-600" />
@@ -946,7 +972,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               </div>
 
               {/* Quick Tab Switcher */}
-              <div className="flex items-center gap-2 border-b border-[#ccfbf1] pb-2">
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
                 <button
                   onClick={() => setActiveNav('dog-breeds')}
                   className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl border border-slate-200 transition-colors flex items-center gap-2"
@@ -956,7 +982,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </button>
                 <button
                   onClick={() => setActiveNav('cat-breeds')}
-                  className="px-4 py-2 bg-[#0d9488] text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Cat Breeds (10)</span>
@@ -981,7 +1007,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -995,7 +1021,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   .map((pet) => (
                     <div
                       key={pet.id}
-                      className="bg-white rounded-2xl border border-[#ccfbf1] p-4 shadow-2xs flex items-center gap-4"
+                      className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex items-center gap-4"
                     >
                       <img
                         src={pet.image}
@@ -1008,7 +1034,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         <div className="mt-2 flex gap-2">
                           <button
                             onClick={() => setActivePetDetail(pet)}
-                            className="px-2.5 py-1 bg-[#0d9488] text-white text-xs font-semibold rounded-lg hover:bg-[#0f766e]"
+                            className="px-2.5 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700"
                           >
                             Apply
                           </button>
@@ -1033,7 +1059,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 <div>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                    className="text-xs font-semibold text-blue-600 hover:underline mb-1 inline-flex items-center gap-1"
                   >
                     ← Back to Dashboard
                   </button>
@@ -1041,7 +1067,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <p className="text-xs text-slate-500">Live milestone progress for your companion adoption applications.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold px-3 py-1 bg-[#e0f9f5] text-[#0f766e] border border-[#99f6e4] rounded-lg">
+                  <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg">
                     {adopterApps.length} Total Applications
                   </span>
                   <span className="text-xs font-semibold px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg">
@@ -1059,7 +1085,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   </p>
                   <button
                     onClick={() => setActiveNav('dashboard')}
-                    className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-xl text-xs font-semibold"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold"
                   >
                     Search Approved Pets
                   </button>
@@ -1071,7 +1097,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     return (
                       <div
                         key={app.id}
-                        className="bg-white rounded-2xl p-5 sm:p-6 border border-[#ccfbf1] shadow-2xs space-y-4"
+                        className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs space-y-4"
                       >
                         {/* Header Row */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
@@ -1161,7 +1187,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                           <div className="text-[11px] font-bold text-slate-700 mb-2.5 flex items-center justify-between">
                             <span>Adoption Screening Milestones</span>
-                            <span className="text-[#0f766e]">Stage {currentStep} of 4</span>
+                            <span className="text-blue-600 font-semibold">Stage {currentStep} of 4</span>
                           </div>
 
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
@@ -1180,7 +1206,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                                     app.status === 'Rejected' && isCurrent
                                       ? 'bg-rose-50 border-rose-200 text-rose-800'
                                       : isCurrent
-                                      ? 'bg-[#e0f9f5] border-[#5eead4] ring-2 ring-[#ccfbf1] text-[#042f2e]'
+                                      ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100 text-blue-900'
                                       : isDone
                                       ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                                       : 'bg-white border-slate-100 text-slate-400'
@@ -1220,7 +1246,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1230,7 +1256,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
 
               <div className="space-y-4">
                 {adopterApps.map((app) => (
-                  <div key={app.id} className="bg-white rounded-2xl p-6 border border-[#ccfbf1] shadow-2xs space-y-5">
+                  <div key={app.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                       <div>
                         <div className="flex items-center gap-2">
@@ -1267,7 +1293,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                                 legalNote: 'Official permanent adoption certificate issued under Animal Welfare Board standards.',
                               });
                             }}
-                            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
                           >
                             <Award className="w-3.5 h-3.5" />
                             <span>View Adoption Certificate</span>
@@ -1292,19 +1318,19 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                             key={s.num}
                             className={`p-3 rounded-xl border transition-all ${
                               isCurrent
-                                ? 'bg-[#e0f9f5] border-[#5eead4] ring-2 ring-[#ccfbf1]'
+                                ? 'bg-blue-50/90 border-blue-300 ring-2 ring-blue-100'
                                 : isDone
-                                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                                ? 'bg-blue-50/50 border-blue-200 text-slate-800'
                                 : 'bg-slate-50 border-slate-100 text-slate-400'
                             }`}
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span
                                 className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                                  isDone
-                                    ? 'bg-emerald-500 text-white'
+                                  isDone && !isCurrent
+                                    ? 'bg-blue-600 text-white'
                                     : isCurrent
-                                    ? 'bg-[#0d9488] text-white'
+                                    ? 'bg-blue-600 text-white shadow-xs'
                                     : 'bg-slate-200 text-slate-600'
                                 }`}
                               >
@@ -1329,7 +1355,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1345,7 +1371,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                   <div
                     key={i}
                     className={`p-4 rounded-xl border flex items-center justify-between ${
-                      m.unread ? 'bg-[#e0f9f5]/50 border-[#99f6e4]' : 'border-slate-100'
+                      m.unread ? 'bg-blue-50/50 border-blue-200' : 'border-slate-100'
                     }`}
                   >
                     <div>
@@ -1356,7 +1382,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       <span className="text-[11px] text-slate-400">{m.time}</span>
                       <button
                         onClick={() => onOpenChatModal(m.shelter, m.message)}
-                        className="px-3 py-1 bg-[#0d9488] text-white text-xs font-semibold rounded-lg hover:bg-[#0f766e] shadow-2xs transition-colors"
+                        className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 shadow-2xs transition-colors"
                       >
                         Reply
                       </button>
@@ -1373,7 +1399,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1390,7 +1416,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         <h4 className="font-bold text-slate-900 text-sm">{cert.petName} ({cert.petType})</h4>
                         <p className="text-xs text-slate-500 mt-0.5">{cert.breed} • Adopted: {cert.adoptionDate}</p>
                         <p className="text-[11px] text-slate-400">Shelter: {cert.shelterName}</p>
-                        <span className="inline-block mt-1 text-[10px] font-mono font-semibold px-2 py-0.5 bg-[#e0f9f5] text-[#0f766e] rounded border border-[#99f6e4]">
+                        <span className="inline-block mt-1 text-[10px] font-mono font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200">
                           {cert.certId}
                         </span>
                       </div>
@@ -1403,7 +1429,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       </span>
                       <button
                         onClick={() => setSelectedCert(cert)}
-                        className="px-3.5 py-1.5 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
+                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs"
                       >
                         <Award className="w-3.5 h-3.5" />
                         <span>View Certificate</span>
@@ -1421,7 +1447,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               <div>
                 <button
                   onClick={() => setActiveNav('dashboard')}
-                  className="text-xs font-semibold text-[#0f766e] hover:underline mb-1 inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline mb-1 inline-flex items-center gap-1"
                 >
                   ← Back to Dashboard
                 </button>
@@ -1429,7 +1455,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 <p className="text-xs text-slate-500">Living environment credentials and veterinarian references.</p>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-[#ccfbf1] shadow-2xs space-y-4 max-w-xl">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-2xs space-y-4 max-w-xl">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Full Name</label>
                   <input
@@ -1437,7 +1463,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="Enter full name"
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1447,7 +1473,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     value={profileEmail}
                     onChange={(e) => setProfileEmail(e.target.value)}
                     placeholder="Enter email address"
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1459,7 +1485,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       value={user?.role || 'Adopter'}
                       className="flex-1 text-xs px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 focus:outline-none"
                     />
-                    <span className="text-[11px] font-semibold text-[#0f766e] bg-[#e0f9f5] px-3 py-2 rounded-xl border border-[#99f6e4]">
+                    <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-3 py-2 rounded-xl border border-blue-200">
                       {user?.status || 'Verified Profile'}
                     </span>
                   </div>
@@ -1471,7 +1497,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     value={profileResidence}
                     onChange={(e) => setProfileResidence(e.target.value)}
                     placeholder="e.g. Single Family Home with Fenced Yard"
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1481,7 +1507,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     value={profileLocation}
                     onChange={(e) => setProfileLocation(e.target.value)}
                     placeholder="e.g. Austin, TX"
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <div>
@@ -1490,12 +1516,12 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                     type="text"
                     value={profileVet}
                     onChange={(e) => setProfileVet(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-[#0d9488]"
+                    className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 focus:outline-blue-600"
                   />
                 </div>
                 <button
                   onClick={() => triggerToast('Adopter profile saved successfully!')}
-                  className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors"
                 >
                   Update Information
                 </button>
@@ -1511,7 +1537,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <PawPrint className="w-4 h-4 text-[#0d9488]" />
+                <PawPrint className="w-4 h-4 text-blue-600" />
                 <span>Meet {activePetDetail.name}</span>
               </h3>
               <button
@@ -1557,21 +1583,21 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 );
                 if (!matchedCat) return null;
                 return (
-                  <div className="p-3 bg-[#e0f9f5] rounded-xl border border-[#99f6e4] text-xs space-y-1.5">
+                  <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-xs space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#042f2e] flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-[#0d9488]" />
+                      <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                         <span>Cat Breed Guide: {matchedCat.breed}</span>
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ccfbf1] text-[#0f766e]">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                         Lifespan: {matchedCat.lifespan}
                       </span>
                     </div>
-                    <div className="text-[11px] text-[#0f766e] grid grid-cols-2 gap-2">
+                    <div className="text-[11px] text-blue-700 grid grid-cols-2 gap-2">
                       <p><strong>Origin:</strong> {matchedCat.origin}</p>
                       <p><strong>Coat:</strong> {matchedCat.coatType}</p>
                     </div>
-                    <p className="text-[11px] text-[#115e59] italic">
+                    <p className="text-[11px] text-slate-600 italic">
                       "{matchedCat.careTips}"
                     </p>
                   </div>
@@ -1579,13 +1605,13 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
               })()}
 
               {/* ================= PET HEALTH INFO (Feature 14: Adopter ✅) ================= */}
-              <div className="p-3 bg-[#e0f9f5]/50 rounded-xl border border-[#99f6e4] space-y-2">
+              <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-200 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[#042f2e] font-bold flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-[#0d9488]" />
+                  <span className="text-slate-900 font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-blue-600" />
                     <span>Veterinary &amp; Health Clearance</span>
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ccfbf1] text-[#0f766e]">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                     {activePetDetail.verificationStatus || 'Verified Pet'}
                   </span>
                 </div>
@@ -1663,7 +1689,7 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       setActiveNav('applications');
                       triggerToast(`Adoption inquiry submitted for ${activePetDetail.name}! You can now track its real-time status (Step 6 → 7).`);
                     }}
-                    className="px-4 py-2 bg-[#0d9488] hover:bg-[#0f766e] text-white rounded-xl font-semibold shadow-2xs"
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-2xs"
                   >
                     Apply to Adopt
                   </button>

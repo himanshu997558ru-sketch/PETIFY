@@ -88,6 +88,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Timeframe filter for Platform Activity chart
   const [activityTimeframe, setActivityTimeframe] = useState<'7' | '30' | '90'>('7');
+  const [hoveredActivityIndex, setHoveredActivityIndex] = useState<number | null>(null);
+  const [hoveredPetType, setHoveredPetType] = useState<string | null>(null);
+  const [adoptionFlowMode, setAdoptionFlowMode] = useState<'stream' | 'wave'>('stream');
+  const [hoveredAdoptionStat, setHoveredAdoptionStat] = useState<string | null>(null);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -327,6 +331,70 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const currentActivityData = activityDataMap[activityTimeframe];
+
+  // Helper calculations for smooth flowing spline curves & fluid area wave fills
+  const getActivityPoints = (key: 'users' | 'adoptions') => {
+    const data = currentActivityData;
+    const maxVal = Math.max(...data.flatMap((d) => [d.users, d.adoptions])) * 1.15 || 50;
+    const paddingLeft = 24;
+    const paddingRight = 24;
+    const paddingTop = 14;
+    const paddingBottom = 16;
+    const width = 420;
+    const height = 120;
+    const usableW = width - (paddingLeft + paddingRight);
+    const usableH = height - (paddingTop + paddingBottom);
+
+    return data.map((d, i) => {
+      const x = paddingLeft + (i / Math.max(data.length - 1, 1)) * usableW;
+      const val = d[key];
+      const y = paddingTop + (1 - val / maxVal) * usableH;
+      return { x, y, val, date: d.date };
+    });
+  };
+
+  const getSmoothBezierPath = (points: { x: number; y: number }[]) => {
+    if (points.length === 0) return '';
+    if (points.length === 1) return `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+    if (points.length === 2) {
+      const midX = (points[0].x + points[1].x) / 2;
+      return `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)} Q ${midX.toFixed(1)},${((points[0].y + points[1].y) / 2).toFixed(1)} ${points[1].x.toFixed(1)},${points[1].y.toFixed(1)}`;
+    }
+    let path = `M ${points[0].x.toFixed(1)},${points[0].y.toFixed(1)}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i === 0 ? 0 : i - 1];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+      const tension = 6;
+      const cp1x = p1.x + (p2.x - p0.x) / tension;
+      const cp1y = p1.y + (p2.y - p0.y) / tension;
+      const cp2x = p2.x - (p3.x - p1.x) / tension;
+      const cp2y = p2.y - (p3.y - p1.y) / tension;
+
+      path += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return path;
+  };
+
+  const getSmoothAreaPath = (points: { x: number; y: number }[], baselineY = 120) => {
+    if (points.length === 0) return '';
+    const linePath = getSmoothBezierPath(points);
+    const firstX = points[0].x.toFixed(1);
+    const lastX = points[points.length - 1].x.toFixed(1);
+    return `${linePath} L ${lastX},${baselineY} L ${firstX},${baselineY} Z`;
+  };
+
+  const userActivityPoints = getActivityPoints('users');
+  const adoptionActivityPoints = getActivityPoints('adoptions');
+  const userBezierPath = getSmoothBezierPath(userActivityPoints);
+  const adoptionBezierPath = getSmoothBezierPath(adoptionActivityPoints);
+  const userAreaPath = getSmoothAreaPath(userActivityPoints, 120);
+  const adoptionAreaPath = getSmoothAreaPath(adoptionActivityPoints, 120);
+
+  const totalPeriodUsers = currentActivityData.reduce((acc, curr) => acc + curr.users, 0);
+  const totalPeriodAdoptions = currentActivityData.reduce((acc, curr) => acc + curr.adoptions, 0);
 
   // Planned features list matching screenshot exactly
   const plannedFeatures = [
@@ -730,363 +798,841 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="lg:col-span-2 space-y-6">
               {/* Top Row: Platform Activity & Pet Type Distribution */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Platform Activity Line Chart (2/3 width) */}
-                <div className="md:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-                  <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-                    <h3 className="text-sm font-bold text-[#0f172a]">Platform Activity</h3>
-                    <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-lg text-xs font-medium">
-                      {(['7', '30', '90'] as const).map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setActivityTimeframe(t)}
-                          className={`px-2.5 py-1 rounded-md transition-all text-[11px] ${
-                            activityTimeframe === t
-                              ? 'bg-[#2563eb] text-white font-semibold shadow-2xs'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          {t === '7' ? '7 Days' : t === '30' ? '30 Days' : '3 Months'}
-                        </button>
-                      ))}
+                {/* Platform Activity Line Chart (2/3 width) - Flowing Visuals */}
+                <div className="md:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between relative overflow-hidden">
+                  {/* Subtle decorative background wave glow */}
+                  <div className="absolute -top-16 -right-16 w-48 h-48 bg-gradient-to-br from-blue-100/50 via-indigo-50/20 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+                  <div>
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-1.5">
+                          <Activity className="w-4 h-4 text-blue-600" />
+                          <span>Platform Activity</span>
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Live Stream
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-lg text-xs font-medium">
+                        {(['7', '30', '90'] as const).map((t) => (
+                          <button
+                            key={t}
+                            onClick={() => {
+                              setActivityTimeframe(t);
+                              setHoveredActivityIndex(null);
+                            }}
+                            className={`px-2.5 py-1 rounded-md transition-all text-[11px] ${
+                              activityTimeframe === t
+                                ? 'bg-[#2563eb] text-white font-semibold shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            {t === '7' ? '7 Days' : t === '30' ? '30 Days' : '3 Months'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Dynamic Legend and Stream Metrics */}
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                      <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-blue-600 to-sky-400 shadow-2xs shadow-blue-500/50" />
+                          <span className="text-slate-700 font-semibold">New Users</span>
+                          <span className="text-slate-400 text-[11px]">({totalPeriodUsers})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-600 to-fuchsia-400 shadow-2xs shadow-purple-500/50" />
+                          <span className="text-slate-700 font-semibold">Adoptions</span>
+                          <span className="text-slate-400 text-[11px]">({totalPeriodAdoptions})</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-full border border-blue-100">
+                        <TrendingUp className="w-3 h-3" />
+                        <span>+28.4% fluid velocity</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 text-xs font-medium text-slate-500 mb-4">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb]"></span>
-                      <span>New Users</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6]"></span>
-                      <span>Adoptions</span>
-                    </div>
-                  </div>
-
-                  {/* SVG Line Chart */}
-                  <div className="h-44 w-full relative flex items-end">
-                    <svg className="w-full h-full overflow-visible" viewBox="0 0 400 120" preserveAspectRatio="none">
+                  {/* Flowing SVG Area & Line Chart */}
+                  <div
+                    className="h-44 w-full relative flex items-end select-none group"
+                    onMouseLeave={() => setHoveredActivityIndex(null)}
+                  >
+                    <svg
+                      className="w-full h-full overflow-visible"
+                      viewBox="0 0 420 120"
+                      preserveAspectRatio="none"
+                    >
                       <defs>
-                        <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.25" />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                        {/* Flowing multi-stop blue gradient area */}
+                        <linearGradient id="flowBlueArea" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2563eb" stopOpacity="0.38" />
+                          <stop offset="45%" stopColor="#3b82f6" stopOpacity="0.18" />
+                          <stop offset="85%" stopColor="#60a5fa" stopOpacity="0.04" />
+                          <stop offset="100%" stopColor="#93c5fd" stopOpacity="0.0" />
                         </linearGradient>
+
+                        {/* Flowing multi-stop purple gradient area */}
+                        <linearGradient id="flowPurpleArea" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.30" />
+                          <stop offset="50%" stopColor="#a855f7" stopOpacity="0.12" />
+                          <stop offset="90%" stopColor="#c084fc" stopOpacity="0.02" />
+                          <stop offset="100%" stopColor="#e9d5ff" stopOpacity="0.0" />
+                        </linearGradient>
+
+                        {/* Flowing vibrant stroke gradients */}
+                        <linearGradient id="flowBlueStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#1d4ed8" />
+                          <stop offset="50%" stopColor="#2563eb" />
+                          <stop offset="100%" stopColor="#38bdf8" />
+                        </linearGradient>
+
+                        <linearGradient id="flowPurpleStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#6d28d9" />
+                          <stop offset="50%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#c084fc" />
+                        </linearGradient>
+
+                        {/* Soft ambient drop shadows for glowing ribbons */}
+                        <filter id="flowNeonBlue" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#2563eb" floodOpacity="0.35" />
+                        </filter>
+                        <filter id="flowNeonPurple" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="2.5" stdDeviation="3" floodColor="#8b5cf6" floodOpacity="0.32" />
+                        </filter>
                       </defs>
 
-                      {/* Horizontal Grid lines */}
-                      {[0, 30, 60, 90].map((y) => (
-                        <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                      ))}
-
-                      {/* Blue Line: New Users */}
-                      <path
-                        d="M 0,95 Q 60,80 120,70 T 240,65 T 320,40 T 400,15"
-                        fill="none"
-                        stroke="#2563eb"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      />
-
-                      {/* Blue dots */}
-                      {[
-                        { cx: 10, cy: 95 },
-                        { cx: 75, cy: 80 },
-                        { cx: 140, cy: 75 },
-                        { cx: 200, cy: 78 },
-                        { cx: 265, cy: 55 },
-                        { cx: 330, cy: 40 },
-                        { cx: 395, cy: 15 },
-                      ].map((pt, i) => (
-                        <circle
-                          key={i}
-                          cx={pt.cx}
-                          cy={pt.cy}
-                          r="4"
-                          fill="#2563eb"
-                          stroke="#ffffff"
-                          strokeWidth="2"
+                      {/* Gentle horizontal dashed grid lines */}
+                      {[20, 52, 84, 116].map((y) => (
+                        <line
+                          key={y}
+                          x1="10"
+                          y1={y}
+                          x2="410"
+                          y2={y}
+                          stroke="#f1f5f9"
+                          strokeDasharray="4 4"
+                          strokeWidth="1"
                         />
                       ))}
 
-                      {/* Purple Line: Adoptions */}
+                      {/* Flowing Wave Area 1: New Users */}
                       <path
-                        d="M 0,115 Q 65,105 130,95 T 260,98 T 330,85 T 400,68"
-                        fill="none"
-                        stroke="#8b5cf6"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
+                        d={userAreaPath}
+                        fill="url(#flowBlueArea)"
+                        className="transition-all duration-700 ease-in-out"
                       />
 
-                      {/* Purple dots */}
-                      {[
-                        { cx: 10, cy: 115 },
-                        { cx: 75, cy: 105 },
-                        { cx: 140, cy: 95 },
-                        { cx: 200, cy: 98 },
-                        { cx: 265, cy: 90 },
-                        { cx: 330, cy: 82 },
-                        { cx: 395, cy: 68 },
-                      ].map((pt, i) => (
-                        <circle
-                          key={i}
-                          cx={pt.cx}
-                          cy={pt.cy}
-                          r="4"
-                          fill="#8b5cf6"
-                          stroke="#ffffff"
-                          strokeWidth="2"
+                      {/* Flowing Wave Area 2: Adoptions */}
+                      <path
+                        d={adoptionAreaPath}
+                        fill="url(#flowPurpleArea)"
+                        className="transition-all duration-700 ease-in-out"
+                      />
+
+                      {/* Smooth Ribbon 1: Users */}
+                      <path
+                        d={userBezierPath}
+                        fill="none"
+                        stroke="url(#flowBlueStroke)"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter="url(#flowNeonBlue)"
+                        className="transition-all duration-700 ease-in-out"
+                      />
+
+                      {/* Smooth Ribbon 2: Adoptions */}
+                      <path
+                        d={adoptionBezierPath}
+                        fill="none"
+                        stroke="url(#flowPurpleStroke)"
+                        strokeWidth="2.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter="url(#flowNeonPurple)"
+                        className="transition-all duration-700 ease-in-out"
+                      />
+
+                      {/* Active stream pulse on the newest endpoint */}
+                      {userActivityPoints.length > 0 && (
+                        <g>
+                          <circle
+                            cx={userActivityPoints[userActivityPoints.length - 1].x}
+                            cy={userActivityPoints[userActivityPoints.length - 1].y}
+                            r="11"
+                            fill="#3b82f6"
+                            className="animate-ping opacity-25 origin-center"
+                          />
+                          <circle
+                            cx={userActivityPoints[userActivityPoints.length - 1].x}
+                            cy={userActivityPoints[userActivityPoints.length - 1].y}
+                            r="4.5"
+                            fill="#2563eb"
+                            stroke="#ffffff"
+                            strokeWidth="2"
+                            className="shadow-sm"
+                          />
+                        </g>
+                      )}
+
+                      {adoptionActivityPoints.length > 0 && (
+                        <g>
+                          <circle
+                            cx={adoptionActivityPoints[adoptionActivityPoints.length - 1].x}
+                            cy={adoptionActivityPoints[adoptionActivityPoints.length - 1].y}
+                            r="9"
+                            fill="#8b5cf6"
+                            className="animate-ping opacity-25 origin-center"
+                          />
+                          <circle
+                            cx={adoptionActivityPoints[adoptionActivityPoints.length - 1].x}
+                            cy={adoptionActivityPoints[adoptionActivityPoints.length - 1].y}
+                            r="4"
+                            fill="#8b5cf6"
+                            stroke="#ffffff"
+                            strokeWidth="2"
+                          />
+                        </g>
+                      )}
+
+                      {/* Hover Indicator Vertical Line */}
+                      {hoveredActivityIndex !== null && userActivityPoints[hoveredActivityIndex] && (
+                        <line
+                          x1={userActivityPoints[hoveredActivityIndex].x}
+                          y1="10"
+                          x2={userActivityPoints[hoveredActivityIndex].x}
+                          y2="118"
+                          stroke="#94a3b8"
+                          strokeDasharray="3 3"
+                          strokeWidth="1.5"
                         />
-                      ))}
+                      )}
+
+                      {/* Data dots with generous interactive hit areas */}
+                      {userActivityPoints.map((pt, i) => {
+                        const isHovered = hoveredActivityIndex === i;
+                        const adPt = adoptionActivityPoints[i];
+                        return (
+                          <g key={i}>
+                            {/* Invisible wide hit target for effortless hover */}
+                            <rect
+                              x={pt.x - 18}
+                              y="0"
+                              width="36"
+                              height="120"
+                              fill="transparent"
+                              className="cursor-pointer"
+                              onMouseEnter={() => setHoveredActivityIndex(i)}
+                            />
+
+                            {/* User Dot */}
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r={isHovered ? 6 : 3.5}
+                              fill="#2563eb"
+                              stroke="#ffffff"
+                              strokeWidth={isHovered ? 2.5 : 2}
+                              className="transition-all duration-200 pointer-events-none"
+                            />
+
+                            {/* Adoption Dot */}
+                            {adPt && (
+                              <circle
+                                cx={adPt.x}
+                                cy={adPt.y}
+                                r={isHovered ? 5.5 : 3}
+                                fill="#8b5cf6"
+                                stroke="#ffffff"
+                                strokeWidth={isHovered ? 2.5 : 2}
+                                className="transition-all duration-200 pointer-events-none"
+                              />
+                            )}
+                          </g>
+                        );
+                      })}
                     </svg>
+
+                    {/* Floating Interactive Tooltip */}
+                    {hoveredActivityIndex !== null && userActivityPoints[hoveredActivityIndex] && (
+                      <div
+                        className="absolute bottom-16 -translate-x-1/2 pointer-events-none z-20 transition-all duration-150"
+                        style={{
+                          left: `${(userActivityPoints[hoveredActivityIndex].x / 420) * 100}%`,
+                        }}
+                      >
+                        <div className="bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-2 rounded-xl shadow-xl border border-slate-700/80 min-w-[120px]">
+                          <div className="text-[10px] text-slate-400 font-semibold mb-1 pb-1 border-b border-slate-800 flex items-center justify-between">
+                            <span>{userActivityPoints[hoveredActivityIndex].date}</span>
+                            <span className="text-emerald-400 text-[9px]">Verified</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 text-slate-200">
+                            <span className="flex items-center gap-1.5 text-blue-300 font-medium">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                              Users
+                            </span>
+                            <span className="font-bold text-white">
+                              {userActivityPoints[hoveredActivityIndex].val}
+                            </span>
+                          </div>
+                          {adoptionActivityPoints[hoveredActivityIndex] && (
+                            <div className="flex items-center justify-between gap-3 text-slate-200 mt-0.5">
+                              <span className="flex items-center gap-1.5 text-purple-300 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                Adoptions
+                              </span>
+                              <span className="font-bold text-white">
+                                {adoptionActivityPoints[hoveredActivityIndex].val}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* X-axis labels */}
-                  <div className="flex justify-between text-[11px] text-slate-400 font-medium mt-3 px-1">
+                  {/* Synchronized X-axis date labels */}
+                  <div className="flex justify-between text-[11px] text-slate-400 font-medium mt-3 px-2">
                     {currentActivityData.map((d, i) => (
-                      <span key={i}>{d.date}</span>
+                      <span
+                        key={i}
+                        className={`transition-colors cursor-pointer ${
+                          hoveredActivityIndex === i ? 'text-blue-600 font-bold' : 'hover:text-slate-700'
+                        }`}
+                        onMouseEnter={() => setHoveredActivityIndex(i)}
+                      >
+                        {d.date}
+                      </span>
                     ))}
                   </div>
                 </div>
 
-                {/* Pet Type Distribution Donut Chart (1/3 width) */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-                  <h3 className="text-sm font-bold text-[#0f172a] mb-2">Pet Type Distribution</h3>
+                {/* Pet Type Distribution Donut Chart (1/3 width) - Flowing Visuals */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between relative overflow-hidden">
+                  {/* Soft ambient background radial highlight */}
+                  <div className="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-purple-100/40 via-blue-50/20 to-transparent rounded-full blur-xl pointer-events-none" />
 
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h3 className="text-sm font-bold text-[#0f172a] flex items-center gap-1.5">
+                      <PawPrint className="w-4 h-4 text-purple-600" />
+                      <span>Pet Type Distribution</span>
+                    </h3>
+                    <span className="text-[11px] font-semibold text-slate-400">Total: 120</span>
+                  </div>
+
+                  {/* Flowing Radial Ring Visual */}
                   <div className="flex flex-col items-center justify-center my-2">
-                    <div className="relative w-36 h-36 flex items-center justify-center">
+                    <div className="relative w-38 h-38 sm:w-40 sm:h-40 flex items-center justify-center">
                       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                        {/* Dogs: 43% */}
+                        <defs>
+                          <linearGradient id="flowDogGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#2563eb" />
+                            <stop offset="100%" stopColor="#38bdf8" />
+                          </linearGradient>
+                          <linearGradient id="flowCatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#7c3aed" />
+                            <stop offset="100%" stopColor="#c084fc" />
+                          </linearGradient>
+                          <linearGradient id="flowBirdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#059669" />
+                            <stop offset="100%" stopColor="#34d399" />
+                          </linearGradient>
+                          <linearGradient id="flowOtherGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#d97706" />
+                            <stop offset="100%" stopColor="#fbbf24" />
+                          </linearGradient>
+
+                          <filter id="flowDonutGlow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2.5" floodOpacity="0.25" />
+                          </filter>
+                        </defs>
+
+                        {/* Background track ring */}
                         <circle
                           cx="50"
                           cy="50"
                           r="38"
                           fill="transparent"
-                          stroke="#3b82f6"
-                          strokeWidth="14"
-                          strokeDasharray="102 136"
+                          stroke="#f1f5f9"
+                          strokeWidth="11"
+                        />
+
+                        {/* Dogs: 43.3% -> arc ~ 98 with rounded caps */}
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          fill="transparent"
+                          stroke="url(#flowDogGrad)"
+                          strokeWidth={hoveredPetType === 'Dogs' ? '15' : '12'}
+                          strokeDasharray="96 142.7"
                           strokeDashoffset="0"
+                          strokeLinecap="round"
+                          filter={hoveredPetType === 'Dogs' ? 'url(#flowDonutGlow)' : undefined}
+                          className="transition-all duration-300 cursor-pointer"
+                          onMouseEnter={() => setHoveredPetType('Dogs')}
+                          onMouseLeave={() => setHoveredPetType(null)}
                         />
-                        {/* Cats: 32% */}
+
+                        {/* Cats: 31.7% -> arc ~ 70 with rounded caps */}
                         <circle
                           cx="50"
                           cy="50"
                           r="38"
                           fill="transparent"
-                          stroke="#8b5cf6"
-                          strokeWidth="14"
-                          strokeDasharray="76 162"
-                          strokeDashoffset="-102"
+                          stroke="url(#flowCatGrad)"
+                          strokeWidth={hoveredPetType === 'Cats' ? '15' : '12'}
+                          strokeDasharray="69 169.7"
+                          strokeDashoffset="-102.5"
+                          strokeLinecap="round"
+                          filter={hoveredPetType === 'Cats' ? 'url(#flowDonutGlow)' : undefined}
+                          className="transition-all duration-300 cursor-pointer"
+                          onMouseEnter={() => setHoveredPetType('Cats')}
+                          onMouseLeave={() => setHoveredPetType(null)}
                         />
-                        {/* Birds: 10% */}
+
+                        {/* Birds: 10% -> arc ~ 18 with rounded caps */}
                         <circle
                           cx="50"
                           cy="50"
                           r="38"
                           fill="transparent"
-                          stroke="#10b981"
-                          strokeWidth="14"
-                          strokeDasharray="24 214"
-                          strokeDashoffset="-178"
+                          stroke="url(#flowBirdGrad)"
+                          strokeWidth={hoveredPetType === 'Birds' ? '15' : '12'}
+                          strokeDasharray="18 220.7"
+                          strokeDashoffset="-178.5"
+                          strokeLinecap="round"
+                          filter={hoveredPetType === 'Birds' ? 'url(#flowDonutGlow)' : undefined}
+                          className="transition-all duration-300 cursor-pointer"
+                          onMouseEnter={() => setHoveredPetType('Birds')}
+                          onMouseLeave={() => setHoveredPetType(null)}
                         />
-                        {/* Others: 15% */}
+
+                        {/* Others: 15% -> arc ~ 30 with rounded caps */}
                         <circle
                           cx="50"
                           cy="50"
                           r="38"
                           fill="transparent"
-                          stroke="#f59e0b"
-                          strokeWidth="14"
-                          strokeDasharray="36 202"
-                          strokeDashoffset="-202"
+                          stroke="url(#flowOtherGrad)"
+                          strokeWidth={hoveredPetType === 'Others' ? '15' : '12'}
+                          strokeDasharray="30 208.7"
+                          strokeDashoffset="-202.5"
+                          strokeLinecap="round"
+                          filter={hoveredPetType === 'Others' ? 'url(#flowDonutGlow)' : undefined}
+                          className="transition-all duration-300 cursor-pointer"
+                          onMouseEnter={() => setHoveredPetType('Others')}
+                          onMouseLeave={() => setHoveredPetType(null)}
                         />
                       </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                        <span className="text-xl font-bold text-[#0f172a] leading-none">120</span>
-                        <span className="text-[10px] text-slate-400 font-medium mt-0.5">Total Pets</span>
+
+                      {/* Interactive Center Readout */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center transition-all duration-200">
+                        {hoveredPetType === 'Dogs' ? (
+                          <>
+                            <span className="text-2xl font-black text-blue-600 leading-none">52</span>
+                            <span className="text-[10px] font-bold text-slate-600 mt-0.5">Dogs (43%)</span>
+                          </>
+                        ) : hoveredPetType === 'Cats' ? (
+                          <>
+                            <span className="text-2xl font-black text-purple-600 leading-none">38</span>
+                            <span className="text-[10px] font-bold text-slate-600 mt-0.5">Cats (32%)</span>
+                          </>
+                        ) : hoveredPetType === 'Birds' ? (
+                          <>
+                            <span className="text-2xl font-black text-emerald-600 leading-none">12</span>
+                            <span className="text-[10px] font-bold text-slate-600 mt-0.5">Birds (10%)</span>
+                          </>
+                        ) : hoveredPetType === 'Others' ? (
+                          <>
+                            <span className="text-2xl font-black text-amber-600 leading-none">18</span>
+                            <span className="text-[10px] font-bold text-slate-600 mt-0.5">Others (15%)</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-2xl font-black text-[#0f172a] leading-none tracking-tight">120</span>
+                            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Total Pets</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Legend list matching screenshot */}
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></span>
-                        <span>Dogs</span>
-                      </div>
-                      <span className="font-semibold text-slate-800">52 (43%)</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6]"></span>
-                        <span>Cats</span>
-                      </div>
-                      <span className="font-semibold text-slate-800">38 (32%)</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
-                        <span>Birds</span>
-                      </div>
-                      <span className="font-semibold text-slate-800">12 (10%)</span>
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
-                        <span>Others</span>
-                      </div>
-                      <span className="font-semibold text-slate-800">18 (15%)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Row: Recent Pet Listings Table & Adoption Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Recent Pet Listings Table (2/3 width) */}
-                <div className="md:col-span-2 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-bold text-[#0f172a]">Recent Pet Listings</h3>
-                    <button
-                      onClick={() => setActiveNav('pets')}
-                      className="text-xs font-semibold text-[#2563eb] hover:underline"
-                    >
-                      View All
-                    </button>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-slate-100 text-slate-400 font-semibold">
-                          <th className="pb-3 font-semibold">Pet</th>
-                          <th className="pb-3 font-semibold">Type</th>
-                          <th className="pb-3 font-semibold">Breed</th>
-                          <th className="pb-3 font-semibold">Location</th>
-                          <th className="pb-3 font-semibold">Status</th>
-                          <th className="pb-3 font-semibold text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {combinedPetListings.map((pet) => (
-                          <tr key={pet.id} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="py-3 pr-3">
-                              <div className="flex items-center gap-2.5">
-                                <img
-                                  src={pet.image}
-                                  alt={pet.name}
-                                  className="w-9 h-9 rounded-xl object-cover border border-slate-200"
-                                />
-                                <span className="font-bold text-slate-900">{pet.name}</span>
-                              </div>
-                            </td>
-                            <td className="py-3 text-slate-600">{pet.type}</td>
-                            <td className="py-3 text-slate-600">{pet.breed}</td>
-                            <td className="py-3 text-slate-600">{pet.location}</td>
-                            <td className="py-3">
-                              <span
-                                className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                                  pet.status === 'Approved'
-                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                                    : pet.status === 'Pending'
-                                    ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
-                                    : 'bg-rose-50 text-rose-700 border border-rose-200/60'
-                                }`}
-                              >
-                                {pet.status}
+                  {/* Flowing Proportional Legend Bars */}
+                  <div className="space-y-2 text-xs pt-1">
+                    {[
+                      { type: 'Dogs', count: '52', pct: '43%', barWidth: 'w-[43%]', grad: 'from-blue-600 to-sky-400', dot: 'bg-blue-600' },
+                      { type: 'Cats', count: '38', pct: '32%', barWidth: 'w-[32%]', grad: 'from-purple-600 to-fuchsia-400', dot: 'bg-purple-600' },
+                      { type: 'Birds', count: '12', pct: '10%', barWidth: 'w-[10%]', grad: 'from-emerald-600 to-teal-400', dot: 'bg-emerald-600' },
+                      { type: 'Others', count: '18', pct: '15%', barWidth: 'w-[15%]', grad: 'from-amber-500 to-yellow-400', dot: 'bg-amber-500' },
+                    ].map((item) => {
+                      const isHovered = hoveredPetType === item.type;
+                      return (
+                        <div
+                          key={item.type}
+                          onMouseEnter={() => setHoveredPetType(item.type)}
+                          onMouseLeave={() => setHoveredPetType(null)}
+                          className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                            isHovered ? 'bg-slate-50 shadow-2xs' : 'hover:bg-slate-50/60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-slate-600 mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`w-2.5 h-2.5 rounded-full ${item.dot} ${isHovered ? 'scale-125' : ''} transition-transform`} />
+                              <span className={`font-medium ${isHovered ? 'text-slate-900 font-bold' : ''}`}>
+                                {item.type}
                               </span>
-                            </td>
-                            <td className="py-3 text-right">
-                              {pet.status === 'Pending' ? (
-                                <div className="inline-flex items-center gap-1.5 justify-end">
-                                  <button
-                                    onClick={() => handleApprovePet(pet.id, pet.name)}
-                                    className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-[#10b981] hover:bg-emerald-600 text-white transition-colors shadow-2xs"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleRejectPet(pet.id, pet.name)}
-                                    className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => setViewPetModal(pet)}
-                                  className="px-3 py-1 text-[11px] font-semibold rounded-lg bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors"
-                                >
-                                  View
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                            <span className="font-semibold text-slate-800">
+                              {item.count} <span className="text-slate-400 font-normal">({item.pct})</span>
+                            </span>
+                          </div>
+                          {/* Flowing mini progress ribbon */}
+                          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r ${item.grad} ${item.barWidth} ${
+                                isHovered ? 'opacity-100' : 'opacity-85'
+                              } transition-all duration-300`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
+              </div>
 
-                {/* Adoption Statistics Bar Chart (1/3 width) */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-bold text-[#0f172a]">Adoption Statistics</h3>
-                    <button
-                      onClick={() => setActiveNav('analytics')}
-                      className="text-xs font-semibold text-[#2563eb] hover:underline"
-                    >
-                      View All
-                    </button>
+              {/* Adoption Statistics - Flowing Visuals */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow flex flex-col justify-between relative overflow-hidden">
+                  {/* Soft ambient background radial highlight */}
+                  <div className="absolute -top-12 -right-12 w-36 h-36 bg-gradient-to-br from-emerald-100/40 via-teal-50/20 to-transparent rounded-full blur-xl pointer-events-none" />
+
+                  {/* Header */}
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Heart className="w-4 h-4 text-emerald-600 fill-emerald-100" />
+                        <h3 className="text-sm font-bold text-[#0f172a]">Adoption Statistics</h3>
+                      </div>
+
+                      {/* Flow Mode Switcher */}
+                      <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg text-[10px] font-semibold text-slate-600">
+                        <button
+                          type="button"
+                          onClick={() => setAdoptionFlowMode('stream')}
+                          className={`px-2 py-0.5 rounded-md transition-all ${
+                            adoptionFlowMode === 'stream'
+                              ? 'bg-white text-emerald-700 shadow-2xs font-bold'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          Liquid Stream
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdoptionFlowMode('wave')}
+                          className={`px-2 py-0.5 rounded-md transition-all ${
+                            adoptionFlowMode === 'wave'
+                              ? 'bg-white text-emerald-700 shadow-2xs font-bold'
+                              : 'text-slate-500 hover:text-slate-800'
+                          }`}
+                        >
+                          Flow Wave
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] mb-3">
+                      <div className="flex items-center gap-1 font-semibold text-emerald-600 bg-emerald-50/80 px-2 py-0.5 rounded-full border border-emerald-100 text-[10px]">
+                        <TrendingUp className="w-3 h-3" />
+                        <span>74.3% fluid success rate</span>
+                      </div>
+                      <button
+                        onClick={() => setActiveNav('analytics')}
+                        className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
+                      >
+                        <span>View All</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Simple Bar Chart matching screenshot */}
-                  <div className="h-44 w-full relative flex items-end justify-around pt-8 pb-2">
-                    {/* Y-axis guide */}
-                    <div className="absolute left-0 inset-y-0 flex flex-col justify-between text-[10px] text-slate-400 font-mono pointer-events-none">
-                      <span>100</span>
-                      <span>80</span>
-                      <span>60</span>
-                      <span>40</span>
-                      <span>20</span>
-                      <span>0</span>
+                  {/* Flow Visualization Body */}
+                  {adoptionFlowMode === 'stream' ? (
+                    /* Mode 1: Liquid Stream Columns with flowing capsules and wave shimmer */
+                    <div className="h-44 w-full relative flex items-end justify-between gap-3 pt-6 pb-1 select-none">
+                      {/* Gentle dashed horizontal guide lines */}
+                      <div className="absolute inset-x-0 inset-y-6 flex flex-col justify-between pointer-events-none opacity-40">
+                        <div className="w-full border-b border-dashed border-slate-200" />
+                        <div className="w-full border-b border-dashed border-slate-200" />
+                        <div className="w-full border-b border-dashed border-slate-200" />
+                      </div>
+
+                      {/* Column 1: Adopted (78) */}
+                      <div
+                        className="flex-1 h-full flex flex-col items-center justify-end relative group cursor-pointer"
+                        onMouseEnter={() => setHoveredAdoptionStat('adopted')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="text-xs font-black text-emerald-700 mb-1 group-hover:scale-110 transition-transform">
+                          78
+                        </span>
+
+                        {/* Liquid Chamber track */}
+                        <div className="w-full max-w-[44px] h-[78%] bg-emerald-50/60 rounded-2xl border border-emerald-100/60 p-1 flex flex-col justify-end overflow-hidden relative shadow-inner">
+                          {/* Ambient flowing glow */}
+                          <div
+                            className={`w-full rounded-xl bg-gradient-to-t from-emerald-600 via-emerald-500 to-teal-400 transition-all duration-500 relative shadow-sm ${
+                              hoveredAdoptionStat === 'adopted' ? 'shadow-md shadow-emerald-500/30 brightness-105' : ''
+                            }`}
+                            style={{ height: '100%' }}
+                          >
+                            {/* Animated liquid surface wave crest */}
+                            <div className="w-full h-1.5 bg-white/50 rounded-full blur-[0.5px] mt-0.5 animate-pulse" />
+                            {/* Vertical fluid shimmer sheen */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-xl" />
+                          </div>
+                        </div>
+
+                        <span className="text-[11px] font-semibold text-slate-700 mt-2">Adopted</span>
+                        <span className="text-[10px] text-slate-400 font-medium">74.3%</span>
+                      </div>
+
+                      {/* Column 2: In Process (15) */}
+                      <div
+                        className="flex-1 h-full flex flex-col items-center justify-end relative group cursor-pointer"
+                        onMouseEnter={() => setHoveredAdoptionStat('process')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="text-xs font-black text-blue-700 mb-1 group-hover:scale-110 transition-transform">
+                          15
+                        </span>
+
+                        {/* Liquid Chamber track */}
+                        <div className="w-full max-w-[44px] h-[78%] bg-blue-50/60 rounded-2xl border border-blue-100/60 p-1 flex flex-col justify-end overflow-hidden relative shadow-inner">
+                          {/* Ambient flowing glow */}
+                          <div
+                            className={`w-full rounded-xl bg-gradient-to-t from-blue-600 via-blue-500 to-sky-400 transition-all duration-500 relative shadow-sm ${
+                              hoveredAdoptionStat === 'process' ? 'shadow-md shadow-blue-500/30 brightness-105' : ''
+                            }`}
+                            style={{ height: '24%' }}
+                          >
+                            {/* Animated liquid surface wave crest */}
+                            <div className="w-full h-1.5 bg-white/50 rounded-full blur-[0.5px] mt-0.5 animate-pulse" />
+                            {/* Vertical fluid shimmer sheen */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-xl" />
+                          </div>
+                        </div>
+
+                        <span className="text-[11px] font-semibold text-slate-700 mt-2">In Process</span>
+                        <span className="text-[10px] text-slate-400 font-medium">14.3%</span>
+                      </div>
+
+                      {/* Column 3: Rejected (12) */}
+                      <div
+                        className="flex-1 h-full flex flex-col items-center justify-end relative group cursor-pointer"
+                        onMouseEnter={() => setHoveredAdoptionStat('rejected')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="text-xs font-black text-rose-700 mb-1 group-hover:scale-110 transition-transform">
+                          12
+                        </span>
+
+                        {/* Liquid Chamber track */}
+                        <div className="w-full max-w-[44px] h-[78%] bg-rose-50/60 rounded-2xl border border-rose-100/60 p-1 flex flex-col justify-end overflow-hidden relative shadow-inner">
+                          {/* Ambient flowing glow */}
+                          <div
+                            className={`w-full rounded-xl bg-gradient-to-t from-rose-600 via-rose-500 to-amber-400 transition-all duration-500 relative shadow-sm ${
+                              hoveredAdoptionStat === 'rejected' ? 'shadow-md shadow-rose-500/30 brightness-105' : ''
+                            }`}
+                            style={{ height: '19%' }}
+                          >
+                            {/* Animated liquid surface wave crest */}
+                            <div className="w-full h-1.5 bg-white/50 rounded-full blur-[0.5px] mt-0.5 animate-pulse" />
+                            {/* Vertical fluid shimmer sheen */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-xl" />
+                          </div>
+                        </div>
+
+                        <span className="text-[11px] font-semibold text-slate-700 mt-2">Rejected</span>
+                        <span className="text-[10px] text-slate-400 font-medium">11.4%</span>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Mode 2: Flow Wave Ribbon Canvas */
+                    <div className="h-44 w-full relative flex items-center justify-center select-none pt-2 pb-1">
+                      <svg className="w-full h-full overflow-visible" viewBox="0 0 280 110">
+                        <defs>
+                          <linearGradient id="flowAdoptionArea" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+                            <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.15" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                          </linearGradient>
+
+                          <linearGradient id="flowAdoptionStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="#059669" />
+                            <stop offset="50%" stopColor="#0284c7" />
+                            <stop offset="100%" stopColor="#e11d48" />
+                          </linearGradient>
+
+                          <filter id="flowAdoptionNeon" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2.5" stdDeviation="3" floodColor="#10b981" floodOpacity="0.35" />
+                          </filter>
+                        </defs>
+
+                        {/* Dashed flowing guides */}
+                        <line x1="10" y1="20" x2="270" y2="20" stroke="#f1f5f9" strokeDasharray="3 3" strokeWidth="1" />
+                        <line x1="10" y1="55" x2="270" y2="55" stroke="#f1f5f9" strokeDasharray="3 3" strokeWidth="1" />
+                        <line x1="10" y1="90" x2="270" y2="90" stroke="#f1f5f9" strokeDasharray="3 3" strokeWidth="1" />
+
+                        {/* Flowing Area under the spline */}
+                        <path
+                          d="M 35 24 C 85 28, 110 75, 140 76 C 170 77, 205 85, 245 88 L 245 105 L 35 105 Z"
+                          fill="url(#flowAdoptionArea)"
+                        />
+
+                        {/* Smooth Cubic Bezier Flow Spline */}
+                        <path
+                          d="M 35 24 C 85 28, 110 75, 140 76 C 170 77, 205 85, 245 88"
+                          fill="none"
+                          stroke="url(#flowAdoptionStroke)"
+                          strokeWidth="3.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          filter="url(#flowAdoptionNeon)"
+                        />
+
+                        {/* Flow Stage Node 1: Adopted (78) */}
+                        <g
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredAdoptionStat('adopted')}
+                          onMouseLeave={() => setHoveredAdoptionStat(null)}
+                        >
+                          <circle cx="35" cy="24" r="9" fill="#10b981" className="animate-ping opacity-25" />
+                          <circle cx="35" cy="24" r="5" fill="#059669" stroke="#ffffff" strokeWidth="2.5" />
+                          <text x="35" y="10" textAnchor="middle" fill="#047857" fontSize="10" fontWeight="bold">
+                            78
+                          </text>
+                          <text x="35" y="102" textAnchor="middle" fill="#475569" fontSize="9" fontWeight="600">
+                            Adopted
+                          </text>
+                        </g>
+
+                        {/* Flow Stage Node 2: In Process (15) */}
+                        <g
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredAdoptionStat('process')}
+                          onMouseLeave={() => setHoveredAdoptionStat(null)}
+                        >
+                          <circle cx="140" cy="76" r="4.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+                          <text x="140" y="66" textAnchor="middle" fill="#1d4ed8" fontSize="10" fontWeight="bold">
+                            15
+                          </text>
+                          <text x="140" y="102" textAnchor="middle" fill="#475569" fontSize="9" fontWeight="600">
+                            In Process
+                          </text>
+                        </g>
+
+                        {/* Flow Stage Node 3: Rejected (12) */}
+                        <g
+                          className="cursor-pointer"
+                          onMouseEnter={() => setHoveredAdoptionStat('rejected')}
+                          onMouseLeave={() => setHoveredAdoptionStat(null)}
+                        >
+                          <circle cx="245" cy="88" r="4.5" fill="#e11d48" stroke="#ffffff" strokeWidth="2" />
+                          <text x="245" y="78" textAnchor="middle" fill="#be123c" fontSize="10" fontWeight="bold">
+                            12
+                          </text>
+                          <text x="245" y="102" textAnchor="middle" fill="#475569" fontSize="9" fontWeight="600">
+                            Rejected
+                          </text>
+                        </g>
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Flowing Segmented Pipeline Allocation Ribbon */}
+                  <div className="mt-2 pt-2.5 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-[11px] mb-1.5">
+                      <span className="text-slate-400 font-medium">Pipeline Allocation</span>
+                      <span className="text-slate-700 font-bold">105 Total</span>
                     </div>
 
-                    {/* Bar 1: Adopted (78) */}
-                    <div className="flex flex-col items-center gap-1.5 h-full justify-end z-10 pl-6">
-                      <span className="text-[11px] font-bold text-emerald-700">78</span>
+                    {/* Fluid multi-segment continuous capsule */}
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden flex gap-0.5 p-0.5 shadow-inner">
                       <div
-                        className="w-10 rounded-t-xl bg-gradient-to-t from-emerald-500 to-emerald-400 transition-all shadow-xs"
-                        style={{ height: '78%' }}
-                      ></div>
-                      <span className="text-[11px] font-medium text-slate-600 mt-1">Adopted</span>
+                        className={`h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300 cursor-pointer ${
+                          hoveredAdoptionStat === 'adopted' ? 'brightness-110 shadow-xs' : 'opacity-90'
+                        }`}
+                        style={{ width: '74.3%' }}
+                        title="Adopted: 78 (74.3%)"
+                        onMouseEnter={() => setHoveredAdoptionStat('adopted')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      />
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-400 transition-all duration-300 cursor-pointer ${
+                          hoveredAdoptionStat === 'process' ? 'brightness-110 shadow-xs' : 'opacity-90'
+                        }`}
+                        style={{ width: '14.3%' }}
+                        title="In Process: 15 (14.3%)"
+                        onMouseEnter={() => setHoveredAdoptionStat('process')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      />
+                      <div
+                        className={`h-full rounded-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-300 cursor-pointer ${
+                          hoveredAdoptionStat === 'rejected' ? 'brightness-110 shadow-xs' : 'opacity-90'
+                        }`}
+                        style={{ width: '11.4%' }}
+                        title="Rejected: 12 (11.4%)"
+                        onMouseEnter={() => setHoveredAdoptionStat('rejected')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      />
                     </div>
 
-                    {/* Bar 2: In Process (15) */}
-                    <div className="flex flex-col items-center gap-1.5 h-full justify-end z-10">
-                      <span className="text-[11px] font-bold text-blue-700">15</span>
+                    {/* Proportional Fluid Legend */}
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 mt-2 px-0.5">
                       <div
-                        className="w-10 rounded-t-xl bg-gradient-to-t from-blue-500 to-blue-400 transition-all shadow-xs"
-                        style={{ height: '18%' }}
-                      ></div>
-                      <span className="text-[11px] font-medium text-slate-600 mt-1">In Process</span>
-                    </div>
-
-                    {/* Bar 3: Rejected (12) */}
-                    <div className="flex flex-col items-center gap-1.5 h-full justify-end z-10">
-                      <span className="text-[11px] font-bold text-rose-700">12</span>
+                        className={`flex items-center gap-1 transition-colors cursor-pointer ${
+                          hoveredAdoptionStat === 'adopted' ? 'text-emerald-700 font-bold' : ''
+                        }`}
+                        onMouseEnter={() => setHoveredAdoptionStat('adopted')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-2xs" />
+                        <span>74% Success</span>
+                      </div>
                       <div
-                        className="w-10 rounded-t-xl bg-gradient-to-t from-rose-500 to-rose-400 transition-all shadow-xs"
-                        style={{ height: '14%' }}
-                      ></div>
-                      <span className="text-[11px] font-medium text-slate-600 mt-1">Rejected</span>
+                        className={`flex items-center gap-1 transition-colors cursor-pointer ${
+                          hoveredAdoptionStat === 'process' ? 'text-blue-700 font-bold' : ''
+                        }`}
+                        onMouseEnter={() => setHoveredAdoptionStat('process')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-400 shadow-2xs" />
+                        <span>14% Review</span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-1 transition-colors cursor-pointer ${
+                          hoveredAdoptionStat === 'rejected' ? 'text-rose-700 font-bold' : ''
+                        }`}
+                        onMouseEnter={() => setHoveredAdoptionStat('rejected')}
+                        onMouseLeave={() => setHoveredAdoptionStat(null)}
+                      >
+                        <span className="w-2 h-2 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 shadow-2xs" />
+                        <span>11% Denied</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* RIGHT COLUMN (1/3 WIDTH): QUICK ACTIONS & RECENT ACTIVITY */}
+              {/* RIGHT COLUMN (1/3 WIDTH): QUICK ACTIONS & RECENT ACTIVITY */}
             <div className="space-y-6">
               {/* Quick Actions Card matching screenshot */}
               <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs">
@@ -1202,27 +1748,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <span className="text-[10px] text-slate-400 whitespace-nowrap">5 hours ago</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Inspirational Card matching screenshot: "Together we can make a difference" */}
-              <div className="rounded-2xl p-5 bg-gradient-to-tr from-blue-50 to-indigo-50/70 border border-blue-100 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <PawPrint className="w-5 h-5 fill-current" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">Together we can make a difference</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                      Every adoption saves a life. Help pets find their forever homes.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => triggerToast('Every adoption creates a brighter future for animals!')}
-                  className="w-8 h-8 rounded-full bg-white border border-slate-200/80 text-slate-600 hover:text-blue-600 hover:border-blue-300 flex items-center justify-center shrink-0 transition-colors shadow-2xs"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
