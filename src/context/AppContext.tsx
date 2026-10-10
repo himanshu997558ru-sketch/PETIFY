@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CertificateData } from '../components/AdoptionCertificateModal';
+import { supabaseBackendService } from '../services/supabaseBackend';
 
 export interface SyncedPet {
   id: string;
@@ -34,8 +35,8 @@ export interface SyncedApplication {
   email: string;
   phone: string;
   date: string;
-  status: 'Pending' | 'Under Review' | 'Approved' | 'Rejected' | 'Finalized';
-  statusColor?: 'amber' | 'emerald' | 'sky' | 'rose';
+  status: 'Pending' | 'Under Review' | 'Approved' | 'Rejected' | 'Finalized' | 'Cancelled';
+  statusColor?: 'amber' | 'emerald' | 'sky' | 'rose' | 'slate';
   step: number; // 1: Application Form, 2: Phone Screening, 3: Meet & Greet, 4: Adoption Finalized
   certId?: string;
   notes?: string;
@@ -106,6 +107,8 @@ interface AppContextType {
   submitApplication: (appData: Partial<SyncedApplication> & { petName: string; petId: string }) => SyncedApplication;
   updateApplicationStatus: (appId: string, status: SyncedApplication['status']) => void;
   advanceApplicationStep: (appId: string, step: number) => void;
+  cancelApplication: (appId: string, reason?: string) => void;
+  deleteApplication: (appId: string) => void;
   issueCertificateForApp: (appId: string, certData?: Partial<CertificateData>) => void;
 
   // Appointments
@@ -136,6 +139,17 @@ interface AppContextType {
   users: SyncedUser[];
   addUser: (userData: Omit<SyncedUser, 'id' | 'joinedDate'>) => void;
   updateUserStatus: (userId: string, status: SyncedUser['status']) => void;
+
+  // Database & Supabase Live Status
+  dbStatus: {
+    connected: boolean;
+    projectId: string;
+    hasRealDatabaseTables: boolean;
+    activeProvider: string;
+    lastChecked: string;
+  };
+  refreshDbStatus: () => Promise<void>;
+  getMigrationSQL: () => string;
 
   // Reset to initial defaults
   resetAllData: () => void;
@@ -820,6 +834,75 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  // Live Supabase Database state
+  const [dbStatus, setDbStatus] = useState({
+    connected: true,
+    projectId: 'pdrxzltydbsrmiapiuct',
+    hasRealDatabaseTables: false,
+    activeProvider: 'local_resilient_store',
+    lastChecked: new Date().toLocaleTimeString(),
+  });
+
+  // Check connection to Supabase database on mount
+  useEffect(() => {
+    let mounted = true;
+    async function checkSupabase() {
+      try {
+        const status = await supabaseBackendService.checkConnection();
+        if (mounted) {
+          setDbStatus({
+            connected: status.connected,
+            projectId: status.projectId,
+            hasRealDatabaseTables: status.hasRealDatabaseTables,
+            activeProvider: status.activeProvider,
+            lastChecked: new Date().toLocaleTimeString(),
+          });
+
+          // If real Supabase database has records, hydrate into state
+          if (status.hasRealDatabaseTables) {
+            const remotePets = await supabaseBackendService.fetchPets();
+            if (remotePets && remotePets.length > 0) {
+              setPets(remotePets);
+            }
+            const remoteApps = await supabaseBackendService.fetchApplications();
+            if (remoteApps && remoteApps.length > 0) {
+              setApplications(remoteApps);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Supabase status check:', e);
+      }
+    }
+    checkSupabase();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const refreshDbStatus = async () => {
+    try {
+      const status = await supabaseBackendService.checkConnection();
+      setDbStatus({
+        connected: status.connected,
+        projectId: status.projectId,
+        hasRealDatabaseTables: status.hasRealDatabaseTables,
+        activeProvider: status.activeProvider,
+        lastChecked: new Date().toLocaleTimeString(),
+      });
+      if (status.hasRealDatabaseTables) {
+        const remotePets = await supabaseBackendService.fetchPets();
+        if (remotePets && remotePets.length > 0) setPets(remotePets);
+        const remoteApps = await supabaseBackendService.fetchApplications();
+        if (remoteApps && remoteApps.length > 0) setApplications(remoteApps);
+      }
+    } catch {
+      // Keep existing state
+    }
+  };
+
+  const getMigrationSQL = () => supabaseBackendService.getSchemaMigrationSQL();
+
   // Sync to localStorage
   useEffect(() => {
     try {
@@ -843,44 +926,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `p-${Date.now()}`,
     };
     setPets((prev) => [newPet, ...prev]);
+    supabaseBackendService.savePet(newPet).catch(() => {});
     return newPet;
   };
 
   const updatePet = (id: string, updates: Partial<SyncedPet>) => {
-    setPets((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setPets((prev) => {
+      const updated = prev.map((p) => (p.id === id ? { ...p, ...updates } : p));
+      const target = updated.find((p) => p.id === id);
+      if (target) supabaseBackendService.savePet(target).catch(() => {});
+      return updated;
+    });
   };
 
   const approvePetByAdmin = (id: string) => {
-    setPets((prev) =>
-      prev.map((p) =>
+    setPets((prev) => {
+      const updated = prev.map((p) =>
         p.id === id
           ? {
               ...p,
-              adminStatus: 'Approved',
-              verificationStatus: 'Verified',
-              status: 'Available',
+              adminStatus: 'Approved' as const,
+              verificationStatus: 'Verified' as const,
+              status: 'Available' as const,
             }
           : p
-      )
-    );
+      );
+      const target = updated.find((p) => p.id === id);
+      if (target) supabaseBackendService.savePet(target).catch(() => {});
+      return updated;
+    });
   };
 
   const rejectPetByAdmin = (id: string) => {
-    setPets((prev) =>
-      prev.map((p) =>
+    setPets((prev) => {
+      const updated = prev.map((p) =>
         p.id === id
           ? {
               ...p,
-              adminStatus: 'Rejected',
-              status: 'Suspended',
+              adminStatus: 'Rejected' as const,
+              status: 'Suspended' as const,
             }
           : p
-      )
-    );
+      );
+      const target = updated.find((p) => p.id === id);
+      if (target) supabaseBackendService.savePet(target).catch(() => {});
+      return updated;
+    });
   };
 
   const deletePet = (id: string) => {
     setPets((prev) => prev.filter((p) => p.id !== id));
+    supabaseBackendService.deletePet(id).catch(() => {});
   };
 
   // Application Operations
@@ -901,9 +997,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'Pending',
       statusColor: 'amber',
       step: 1,
-      notes: appData.notes || 'Submitted application via Adopter portal.',
+      notes: appData.notes || 'Submitted via Adopter Portal',
     };
     setApplications((prev) => [newApp, ...prev]);
+    supabaseBackendService.saveApplication(newApp).catch(() => {});
     return newApp;
   };
 
@@ -912,8 +1009,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((a) => {
         if (a.id === appId) {
           const color: SyncedApplication['statusColor'] =
-            status === 'Approved' ? 'emerald' : status === 'Rejected' ? 'rose' : status === 'Under Review' ? 'sky' : 'amber';
-          return { ...a, status, statusColor: color };
+            status === 'Approved' ? 'emerald' : status === 'Rejected' ? 'rose' : status === 'Cancelled' ? 'slate' : status === 'Under Review' ? 'sky' : 'amber';
+          const updated = { ...a, status, statusColor: color };
+          supabaseBackendService.saveApplication(updated).catch(() => {});
+          return updated;
         }
         return a;
       })
@@ -925,19 +1024,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((a) => {
         if (a.id === appId) {
           const isFinal = step === 4;
-          const status = isFinal ? 'Approved' : 'Under Review';
+          const status: SyncedApplication['status'] = isFinal ? 'Approved' : 'Under Review';
           const certId = isFinal ? a.certId || `PC-CERT-${Math.floor(1000 + Math.random() * 9000)}` : a.certId;
-          return {
+          const updated: SyncedApplication = {
             ...a,
             step,
             status,
-            statusColor: isFinal ? 'emerald' : 'sky',
+            statusColor: isFinal ? ('emerald' as const) : ('sky' as const),
             certId,
           };
+          supabaseBackendService.saveApplication(updated).catch(() => {});
+          return updated;
         }
         return a;
       })
     );
+  };
+
+  const cancelApplication = (appId: string, reason?: string) => {
+    setApplications((prev) =>
+      prev.map((a) => {
+        if (a.id === appId) {
+          const updated: SyncedApplication = {
+            ...a,
+            status: 'Cancelled',
+            statusColor: 'slate',
+            notes: reason || 'Cancelled by adopter request',
+          };
+          supabaseBackendService.saveApplication(updated).catch(() => {});
+          return updated;
+        }
+        return a;
+      })
+    );
+  };
+
+  const deleteApplication = (appId: string) => {
+    setApplications((prev) => prev.filter((a) => a.id !== appId));
+    supabaseBackendService.deleteApplication(appId).catch(() => {});
   };
 
   const issueCertificateForApp = (appId: string, customCertData?: Partial<CertificateData>) => {
@@ -1080,6 +1204,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitApplication,
         updateApplicationStatus,
         advanceApplicationStep,
+        cancelApplication,
+        deleteApplication,
         issueCertificateForApp,
         appointments,
         requestAppointment,
@@ -1098,6 +1224,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         users,
         addUser,
         updateUserStatus,
+        dbStatus,
+        refreshDbStatus,
+        getMigrationSQL,
         resetAllData,
       }}
     >

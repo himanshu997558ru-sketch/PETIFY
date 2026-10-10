@@ -30,6 +30,9 @@ import {
   Building2,
   Shield,
   UserCheck,
+  XCircle,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { AdoptionApplication, Pet, SavedCompanion, ScreenType, ShelterMessage, UserProfile } from '../types';
 import { PETIFY_LOGO } from '../data/mockData';
@@ -114,6 +117,8 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
     pets: storePets,
     applications: storeApps,
     submitApplication,
+    cancelApplication,
+    deleteApplication,
     appointments: storeAppointments,
     requestAppointment,
     submitReport,
@@ -122,6 +127,19 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
     isFavorited,
     certificates: storeCertificates,
   } = useAppStore();
+
+  const [confirmCancelApp, setConfirmCancelApp] = useState<{ id: string; petName: string; shelterName?: string } | null>(null);
+
+  const handleCancelApplication = (appId: string, petName: string) => {
+    cancelApplication(appId);
+    setConfirmCancelApp(null);
+    triggerToast(`Application for ${petName} was successfully cancelled.`);
+  };
+
+  const handleDeleteApplication = (appId: string, petName: string) => {
+    deleteApplication(appId);
+    triggerToast(`Application record for ${petName} was removed.`);
+  };
 
   // Mapped Adopter Scheduled Appointments
   const adopterAppointments = storeAppointments;
@@ -264,13 +282,13 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-3 min-w-0 text-left">
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span className="truncate text-left leading-normal">{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
                         isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
                       }`}
                     >
@@ -436,59 +454,77 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6 bg-[#f4f7fe]">
           {activeNav === 'dashboard' && (
             <>
-              {/* ================= 4 STAT CARDS ================= */}
+              {/* ================= 4 STAT CARDS (REAL DATA NUMBERS) ================= */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Available Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('search')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] group-hover:scale-105 transition-transform flex items-center justify-center">
                       <PawPrint className="w-5 h-5 fill-current" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Available Pets</span>
+                    <span className="text-xs font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">Available Pets</span>
                   </div>
                   <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">128</span>
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{approvedPets.length}</span>
                   </div>
-                </div>
+                </button>
 
                 {/* My Applications */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('applications')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-indigo-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                      <Heart className="w-5 h-5 fill-current" />
-                    </div>
-                    <span className="text-xs font-semibold text-slate-500">My Applications</span>
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">4</span>
-                  </div>
-                </div>
-
-                {/* Adopted Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform flex items-center justify-center">
                       <FileText className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Adopted Pets</span>
+                    <span className="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">My Applications</span>
                   </div>
                   <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">2</span>
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{adopterApps.length}</span>
                   </div>
-                </div>
+                </button>
+
+                {/* Adopted Pets */}
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('history')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-emerald-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform flex items-center justify-center">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Adopted Pets</span>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                      {adopterApps.filter((a) => a.status === 'Approved').length}
+                    </span>
+                  </div>
+                </button>
 
                 {/* Favorites */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('favorites')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-amber-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 group-hover:scale-105 transition-transform flex items-center justify-center">
                       <Star className="w-5 h-5 fill-current" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Favorites</span>
+                    <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">Favorites</span>
                   </div>
                   <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">6</span>
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{favoritedNames.length}</span>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* ================= FIND YOUR NEW FRIEND (SEARCH & FILTERS) ================= */}
@@ -656,103 +692,48 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                 </div>
               </div>
 
-              {/* ================= BOTTOM SPLIT: APPLICATIONS & ADOPTION JOURNEY ================= */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* My Recent Applications (approx 60-65% width) */}
-                <div className="lg:col-span-7 bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                      <h3 className="text-sm font-bold text-slate-900">My Recent Applications</h3>
+              {/* ================= ADOPTION JOURNEY CARD (FULL WIDTH & ALIGNED) ================= */}
+              <div className="bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-white rounded-2xl p-6 border border-blue-100 shadow-2xs overflow-hidden">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                  {/* Left Content */}
+                  <div className="space-y-2 text-center sm:text-left flex-1">
+                    <div className="inline-flex items-center gap-2 text-blue-600 bg-blue-100/60 px-3 py-1 rounded-full text-xs font-bold">
+                      <Heart className="w-3.5 h-3.5 fill-current" />
+                      <span>Adoption Journey</span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                      Step-by-Step Pathway to Welcoming Your Companion
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-xl">
+                      From application review and phone screening to meet &amp; greet and certificate issuance — small steps make a lifelong difference 🐾
+                    </p>
+                    <div className="pt-2 flex flex-wrap items-center gap-3 justify-center sm:justify-start">
                       <button
-                        onClick={() => setActiveNav('applications')}
-                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                        onClick={() => setActiveNav('status')}
+                        className="py-2.5 px-5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
                       >
-                        View All
+                        Track Application Journey →
+                      </button>
+                      <button
+                        onClick={() => triggerToast('Opened step-by-step adoption guide!')}
+                        className="py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl border border-blue-200 shadow-2xs transition-all"
+                      >
+                        View Adopter Guide
                       </button>
                     </div>
-
-                    <div className="overflow-x-auto mt-1">
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-100 text-slate-400 font-semibold">
-                            <th className="py-3 px-2 font-medium">Pet Name</th>
-                            <th className="py-3 px-2 font-medium">Status</th>
-                            <th className="py-3 px-2 font-medium text-right">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {adopterApps.map((app) => (
-                            <tr key={app.id} className="hover:bg-slate-50/70 transition-colors">
-                              <td className="py-3.5 px-2 font-bold text-slate-900">
-                                {app.petName}
-                              </td>
-                              <td className="py-3.5 px-2">
-                                <span
-                                  className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                                    app.status === 'Approved'
-                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                      : app.status === 'Pending'
-                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                      : 'bg-sky-50 text-sky-700 border border-sky-200'
-                                  }`}
-                                >
-                                  {app.status}
-                                </span>
-                              </td>
-                              <td className="py-3.5 px-2 text-right font-mono text-[11px] text-slate-400">
-                                {app.date}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                    <span className="text-slate-400 text-[11px]">All shelter screening interviews verified</span>
-                    <button
-                      onClick={() => setActiveNav('status')}
-                      className="text-blue-600 font-semibold hover:underline"
-                    >
-                      Track Application Journey →
-                    </button>
-                  </div>
-                </div>
-
-                {/* Adoption Journey Card (approx 35-40% width) */}
-                <div className="lg:col-span-5 bg-gradient-to-br from-blue-50/80 via-indigo-50/60 to-white rounded-2xl p-5 border border-blue-100 shadow-2xs flex flex-col justify-between relative overflow-hidden">
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 text-blue-600">
-                      <Heart className="w-4 h-4 fill-current" />
-                      <h3 className="text-sm font-bold text-slate-900">Adoption Journey</h3>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1 font-medium">
-                      Small steps make a big difference 🐾
-                    </p>
-                  </div>
-
-                  {/* High quality warm illustration graphic */}
-                  <div className="my-auto py-2 flex items-center justify-center relative">
-                    <div className="relative w-40 h-32 flex items-center justify-center">
+                  {/* Right Illustration Photo */}
+                  <div className="relative shrink-0 flex items-center justify-center">
+                    <div className="relative w-48 h-32 flex items-center justify-center">
                       <img
                         src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=400&q=80"
                         alt="Happy pet cuddles"
-                        className="w-36 h-24 rounded-2xl object-cover border-2 border-white shadow-md rotate-1"
+                        className="w-44 h-28 rounded-2xl object-cover border-2 border-white shadow-md"
                       />
-                      {/* Floating hearts */}
-                      <span className="absolute -top-1 -right-1 text-blue-500 text-sm animate-bounce">🌊</span>
-                      <span className="absolute bottom-2 -left-2 text-indigo-400 text-xs">✨</span>
+                      <span className="absolute -top-1 -right-1 text-blue-500 text-base animate-bounce">🌊</span>
+                      <span className="absolute bottom-1 -left-1 text-indigo-400 text-sm">✨</span>
                     </div>
-                  </div>
-
-                  <div className="relative z-10 pt-2 text-center">
-                    <button
-                      onClick={() => triggerToast('Opened step-by-step adoption guide!')}
-                      className="w-full py-2 bg-white/90 hover:bg-white text-slate-800 text-xs font-bold rounded-xl border border-blue-200 shadow-2xs transition-all"
-                    >
-                      View Adopter Guide
-                    </button>
                   </div>
                 </div>
               </div>
@@ -1120,17 +1101,25 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                             <span
                               className={`text-xs font-bold px-3 py-1 rounded-full ${
                                 app.status === 'Approved'
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 ring-2 ring-emerald-100'
                                   : app.status === 'Rejected'
                                   ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  : app.status === 'Cancelled'
+                                  ? 'bg-slate-100 text-slate-700 border border-slate-300'
                                   : 'bg-amber-50 text-amber-700 border border-amber-200'
                               }`}
                             >
-                              {app.status === 'Approved' ? '✓ Adoption Approved' : app.status === 'Rejected' ? '✕ Application Declined' : '⏳ In Review'}
+                              {app.status === 'Approved'
+                                ? '✓ Adoption Approved'
+                                : app.status === 'Rejected'
+                                ? '✕ Application Declined'
+                                : app.status === 'Cancelled'
+                                ? '✕ Cancelled by You'
+                                : '⏳ In Review'}
                             </span>
 
                             {app.status === 'Approved' && (
@@ -1155,10 +1144,47 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                                 <span>View Official Certificate</span>
                               </button>
                             )}
+
+                            {/* Cancel Application Button */}
+                            {app.status !== 'Cancelled' && (
+                              <button
+                                onClick={() => setConfirmCancelApp({ id: app.id, petName: app.petName, shelterName: app.shelter })}
+                                className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs"
+                                title="Cancel this adoption application"
+                              >
+                                <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                                <span>Cancel Application</span>
+                              </button>
+                            )}
+
+                            {/* Remove Cancelled Record Button */}
+                            {app.status === 'Cancelled' && (
+                              <button
+                                onClick={() => handleDeleteApplication(app.id, app.petName)}
+                                className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-200 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs"
+                                title="Remove cancelled application from your view"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-slate-400 hover:text-rose-500" />
+                                <span>Remove Record</span>
+                              </button>
+                            )}
                           </div>
                         </div>
 
                         {/* Status Banners */}
+                        {app.status === 'Cancelled' && (
+                          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-2.5">
+                              <XCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+                              <div>
+                                <h4 className="text-xs font-bold text-slate-800">Application Cancelled</h4>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  You cancelled this adoption application for {app.petName}. The shelter has been notified. You can apply again anytime or browse more companions.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {app.status === 'Approved' && (
                           <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 flex items-start gap-2.5">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -1265,10 +1291,14 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                             className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                               app.status === 'Approved'
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : app.status === 'Cancelled'
+                                ? 'bg-slate-100 text-slate-700 border border-slate-300'
+                                : app.status === 'Rejected'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}
                           >
-                            {app.status}
+                            {app.status === 'Cancelled' ? 'Cancelled by You' : app.status}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -1276,8 +1306,8 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        {app.step === 4 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {app.step === 4 && app.status === 'Approved' && (
                           <button
                             onClick={() => {
                               setSelectedCert({
@@ -1297,6 +1327,17 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
                           >
                             <Award className="w-3.5 h-3.5" />
                             <span>View Adoption Certificate</span>
+                          </button>
+                        )}
+
+                        {app.status !== 'Cancelled' && (
+                          <button
+                            onClick={() => setConfirmCancelApp({ id: app.id, petName: app.petName, shelterName: app.shelter })}
+                            className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-300 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors shadow-2xs"
+                            title="Cancel this adoption application"
+                          >
+                            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+                            <span>Cancel Application</span>
                           </button>
                         )}
                       </div>
@@ -1726,6 +1767,46 @@ export const AdopterDashboard: React.FC<AdopterDashboardProps> = ({
             triggerToast(`Report registered for ${reportPet.name} (${reason}) & forwarded to Admin Trust & Safety!`);
           }}
         />
+      )}
+
+      {/* ================= MODAL: CONFIRM CANCEL APPLICATION ================= */}
+      {confirmCancelApp && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Cancel Adoption Application</h3>
+                <p className="text-xs text-slate-500">Companion: {confirmCancelApp.petName}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to cancel your adoption application for <strong>{confirmCancelApp.petName}</strong>?
+              This will withdraw your review with <strong>{confirmCancelApp.shelterName || 'the shelter'}</strong>. You can re-apply anytime.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setConfirmCancelApp(null)}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                Keep Application
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCancelApplication(confirmCancelApp.id, confirmCancelApp.petName)}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Yes, Cancel Application</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ================= FLOATING TOAST ================= */}

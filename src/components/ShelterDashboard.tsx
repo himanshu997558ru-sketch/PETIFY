@@ -429,13 +429,13 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-3 min-w-0 text-left">
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#2563eb]' : 'text-slate-400'}`} />
+                    <span className="truncate text-left leading-normal">{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ml-2 ${
                         isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
                       }`}
                     >
@@ -628,59 +628,95 @@ export const ShelterDashboard: React.FC<ShelterDashboardProps> = ({
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6">
           {activeNav === 'dashboard' && (
             <>
-              {/* ================= 4 STAT CARDS ================= */}
+              {/* ================= 4 STAT CARDS (REAL DATA NUMBERS) ================= */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Total Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                      <PawPrint className="w-5 h-5 fill-current" />
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('pets')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-emerald-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform flex items-center justify-center">
+                        <PawPrint className="w-5 h-5 fill-current" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 group-hover:text-emerald-600 transition-colors">Shelter Companions</span>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Total Pets</span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Live</span>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">32</span>
+                  <div className="mt-4 flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{storePets.length}</span>
+                    <span className="text-[11px] text-slate-400 font-medium">Manage pets →</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Pending Apps */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                      <FileText className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('applications')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-blue-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform flex items-center justify-center">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 group-hover:text-blue-600 transition-colors">Pending Apps</span>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Pending Apps</span>
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Action</span>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">7</span>
+                  <div className="mt-4 flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                      {storeApps.filter((a) => a.status === 'Pending' || a.status === 'Under Review').length}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-medium">Review queue →</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Adopted Pets */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                      <CheckCircle2 className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('applications')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-amber-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-105 transition-transform flex items-center justify-center">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-600 transition-colors">Approved Adoptions</span>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Adopted Pets</span>
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">Finalized</span>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">18</span>
+                  <div className="mt-4 flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                      {storeApps.filter((a) => a.status === 'Approved').length}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-medium">View placements →</span>
                   </div>
-                </div>
+                </button>
 
                 {/* Total Adoptions */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-sm transition-all flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                      <Users className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setActiveNav('applications')}
+                  className="bg-white text-left rounded-2xl p-5 border border-slate-200/80 shadow-2xs hover:shadow-xs hover:border-purple-200 transition-all flex flex-col justify-between group cursor-pointer"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 group-hover:scale-105 transition-transform flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500 group-hover:text-purple-600 transition-colors">Total Inquiries</span>
                     </div>
-                    <span className="text-xs font-semibold text-slate-500">Total Adoptions</span>
+                    <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">Total</span>
                   </div>
-                  <div className="mt-4">
-                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">50</span>
+                  <div className="mt-4 flex items-baseline justify-between">
+                    <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{storeApps.length}</span>
+                    <span className="text-[11px] text-slate-400 font-medium">All applications →</span>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* ================= MIDDLE ROW: RECENT PETS & APPLICATIONS OVERVIEW ================= */}
