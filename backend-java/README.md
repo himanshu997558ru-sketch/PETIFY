@@ -1,4 +1,4 @@
-# Kin & Paws - Java Backend Architecture
+# petify - Java Backend Architecture
 
 This module represents the converted Java implementation of the backend logic, domain models, services, scoring engines, and REST API controllers for **Kin & Paws** (Petify).
 
